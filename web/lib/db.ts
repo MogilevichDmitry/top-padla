@@ -39,6 +39,13 @@ export async function getMatches(): Promise<Match[]> {
   return rows;
 }
 
+export async function getPlayerName(playerId: number): Promise<string> {
+  const { rows } = await sql<Player>`
+    SELECT name FROM players WHERE id = ${playerId}
+  `;
+  return rows[0]?.name || `Player ${playerId}`;
+}
+
 export async function getPairs(): Promise<Pair[]> {
   const { rows } = await sql<Pair>`SELECT * FROM pairs`;
   return rows;

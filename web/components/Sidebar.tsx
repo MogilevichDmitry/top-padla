@@ -20,9 +20,8 @@ export default function Sidebar() {
         {/* Logo/Header */}
         <div className="p-6 border-b border-gray-700">
           <Link href="/" className="flex items-center space-x-3">
-            <span className="text-3xl">🏓</span>
             <div>
-              <h1 className="text-xl font-bold">Top Padla</h1>
+              <h1 className="text-xl font-bold">T🎾P PADLA</h1>
               <p className="text-xs text-gray-400">Rating System</p>
             </div>
           </Link>
@@ -46,7 +45,9 @@ export default function Sidebar() {
                 `}
               >
                 <span className="text-xl">{item.icon}</span>
-                <span className="font-medium">{item.label.replace(/^[^\s]+\s/, "")}</span>
+                <span className="font-medium">
+                  {item.label.replace(/^[^\s]+\s/, "")}
+                </span>
               </Link>
             );
           })}
@@ -54,12 +55,9 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-700">
-          <p className="text-xs text-gray-400 text-center">
-            Powered by Next.js
-          </p>
+          <p className="text-xs text-gray-400 text-center">BOTTOM PADLA</p>
         </div>
       </div>
     </aside>
   );
 }
-
