@@ -3,9 +3,12 @@
  * Run with: npx tsx scripts/migrate.ts
  */
 
-import { sql } from '@vercel/postgres';
-import * as fs from 'fs';
-import * as path from 'path';
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
+import { sql } from "@vercel/postgres";
+import * as fs from "fs";
+import * as path from "path";
 
 interface OldPlayer {
   id: number;
@@ -30,15 +33,15 @@ interface OldData {
 }
 
 async function migrate() {
-  console.log('🚀 Starting migration...\n');
+  console.log("🚀 Starting migration...\n");
 
   // Read data.json from parent directory
-  const dataPath = path.join(__dirname, '../../data.json');
-  const data: OldData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+  const dataPath = path.join(__dirname, "../../data.json");
+  const data: OldData = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
 
   try {
     // Create tables
-    console.log('📝 Creating tables...');
+    console.log("📝 Creating tables...");
     await sql`
       CREATE TABLE IF NOT EXISTS players (
         id SERIAL PRIMARY KEY,
@@ -70,10 +73,10 @@ async function migrate() {
         UNIQUE(player1_id, player2_id)
       );
     `;
-    console.log('✅ Tables created\n');
+    console.log("✅ Tables created\n");
 
     // Migrate players
-    console.log('👥 Migrating players...');
+    console.log("👥 Migrating players...");
     const players = Object.values(data.players);
     for (const player of players) {
       await sql`
@@ -85,7 +88,7 @@ async function migrate() {
     console.log(`✅ Migrated ${players.length} players\n`);
 
     // Migrate matches
-    console.log('🎾 Migrating matches...');
+    console.log("🎾 Migrating matches...");
     const matches = Object.values(data.matches);
     for (const match of matches) {
       await sql`
@@ -94,8 +97,8 @@ async function migrate() {
           ${match.id},
           ${match.date}::timestamp,
           ${match.type},
-          ARRAY[${match.team_a.join(',')}]::integer[],
-          ARRAY[${match.team_b.join(',')}]::integer[],
+          ${match.team_a},
+          ${match.team_b},
           ${match.score_a},
           ${match.score_b},
           ${match.created_by}
@@ -103,8 +106,8 @@ async function migrate() {
         ON CONFLICT (id) DO UPDATE SET
           date = ${match.date}::timestamp,
           type = ${match.type},
-          team_a = ARRAY[${match.team_a.join(',')}]::integer[],
-          team_b = ARRAY[${match.team_b.join(',')}]::integer[],
+          team_a = ${match.team_a},
+          team_b = ${match.team_b},
           score_a = ${match.score_a},
           score_b = ${match.score_b},
           created_by = ${match.created_by}
@@ -112,12 +115,11 @@ async function migrate() {
     }
     console.log(`✅ Migrated ${matches.length} matches\n`);
 
-    console.log('🎉 Migration completed successfully!');
+    console.log("🎉 Migration completed successfully!");
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error("❌ Migration failed:", error);
     process.exit(1);
   }
 }
 
 migrate();
-

@@ -50,8 +50,8 @@ export async function createMatch(match: Omit<Match, "id">): Promise<Match> {
     VALUES (
       ${match.date},
       ${match.type},
-      ARRAY[${match.team_a.join(',')}]::integer[],
-      ARRAY[${match.team_b.join(',')}]::integer[],
+      ${match.team_a},
+      ${match.team_b},
       ${match.score_a},
       ${match.score_b},
       ${match.created_by}
