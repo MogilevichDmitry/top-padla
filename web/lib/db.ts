@@ -47,8 +47,15 @@ export async function getPairs(): Promise<Pair[]> {
 export async function createMatch(match: Omit<Match, "id">): Promise<Match> {
   const { rows } = await sql<Match>`
     INSERT INTO matches (date, type, team_a, team_b, score_a, score_b, created_by)
-    VALUES (${match.date}, ${match.type}, ${match.team_a}, ${match.team_b}, 
-            ${match.score_a}, ${match.score_b}, ${match.created_by})
+    VALUES (
+      ${match.date},
+      ${match.type},
+      ARRAY[${match.team_a.join(',')}]::integer[],
+      ARRAY[${match.team_b.join(',')}]::integer[],
+      ${match.score_a},
+      ${match.score_b},
+      ${match.created_by}
+    )
     RETURNING *
   `;
   return rows[0];
