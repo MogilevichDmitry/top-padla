@@ -104,8 +104,6 @@ export interface PlayerStats {
   wins: number;
   losses: number;
   winRate: number;
-  avgScoreFor: number;
-  avgScoreAgainst: number;
   to6Wins: number;
   to6Losses: number;
   to4Wins: number;
@@ -126,8 +124,6 @@ export function getPlayerStats(
   let totalMatches = 0;
   let wins = 0;
   let losses = 0;
-  let totalScoreFor = 0;
-  let totalScoreAgainst = 0;
   let to6Wins = 0,
     to6Losses = 0;
   let to4Wins = 0,
@@ -139,8 +135,6 @@ export function getPlayerStats(
   for (const match of matches) {
     if (match.team_a.includes(playerId) && match.team_a.length === 2) {
       totalMatches++;
-      totalScoreFor += match.score_a;
-      totalScoreAgainst += match.score_b;
 
       const won = match.score_a > match.score_b;
       if (won) wins++;
@@ -169,8 +163,6 @@ export function getPlayerStats(
       }
     } else if (match.team_b.includes(playerId) && match.team_b.length === 2) {
       totalMatches++;
-      totalScoreFor += match.score_b;
-      totalScoreAgainst += match.score_a;
 
       const won = match.score_b > match.score_a;
       if (won) wins++;
@@ -226,8 +218,6 @@ export function getPlayerStats(
     wins,
     losses,
     winRate: totalMatches > 0 ? (wins / totalMatches) * 100 : 0,
-    avgScoreFor: totalMatches > 0 ? totalScoreFor / totalMatches : 0,
-    avgScoreAgainst: totalMatches > 0 ? totalScoreAgainst / totalMatches : 0,
     to6Wins,
     to6Losses,
     to4Wins,

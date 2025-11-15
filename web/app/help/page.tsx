@@ -2,19 +2,21 @@
 
 export default function HelpPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-4 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:py-8 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
             Help & Guide
           </h1>
-          <p className="text-sm md:text-base text-gray-600">Learn how the rating system works</p>
+          <p className="text-sm md:text-base text-gray-500">
+            Learn how the rating system works
+          </p>
         </header>
 
-        <div className="space-y-4 md:space-y-6">
+        <div className="space-y-4 md:space-y-5">
           {/* Rating System */}
-          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
+          <div className="bg-white rounded-md border border-gray-200 p-5 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">
               📊 Rating System
             </h2>
             <div className="space-y-4 text-gray-700">
@@ -68,9 +70,9 @@ export default function HelpPage() {
           </div>
 
           {/* Match Types */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              🎾 Match Types
+          <div className="bg-white rounded-md border border-gray-200 p-5 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">
+              🧩 Match Types
             </h2>
             <div className="space-y-3 text-gray-700">
               <div className="flex items-start space-x-3">
@@ -94,7 +96,7 @@ export default function HelpPage() {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <span className="text-2xl">🎯</span>
+                <span className="text-2xl">🚀</span>
                 <div>
                   <h3 className="font-semibold text-gray-900">To 3 Points</h3>
                   <p className="text-sm">
@@ -107,8 +109,8 @@ export default function HelpPage() {
           </div>
 
           {/* Rating Calculation */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-md border border-gray-200 p-5 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">
               🧮 Rating Calculation Formula
             </h2>
             <div className="space-y-4 text-gray-700">
@@ -116,7 +118,7 @@ export default function HelpPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">
                   1. Expected Result (E)
                 </h3>
-                <p className="font-mono text-sm bg-gray-100 p-3 rounded mb-2">
+                <p className="font-mono text-sm bg-gray-50 border border-gray-200 p-3 rounded-md mb-2">
                   E = 1 / (1 + 10^((opponent_rating - your_rating) / 400))
                 </p>
                 <p className="text-sm">
@@ -135,7 +137,7 @@ export default function HelpPage() {
                 <ul className="list-disc list-inside text-sm space-y-1 ml-4">
                   <li>Win 6-0: S = 0.8 (maximum)</li>
                   <li>Win 6-3: S = 0.65</li>
-                  <li>Win 6-5: S = 0.55</li>
+                  <li>Win 7-6: S = 0.55 (tiebreak)</li>
                   <li>Lose 3-6: S = 0.35</li>
                   <li>Lose 0-6: S = 0.2 (minimum)</li>
                 </ul>
@@ -149,7 +151,7 @@ export default function HelpPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">
                   3. Rating Change (Δ)
                 </h3>
-                <p className="font-mono text-sm bg-gray-100 p-3 rounded mb-2">
+                <p className="font-mono text-sm bg-gray-50 border border-gray-200 p-3 rounded-md mb-2">
                   Δ = K × L × (S - E)
                 </p>
                 <p className="text-sm">
@@ -164,12 +166,12 @@ export default function HelpPage() {
           </div>
 
           {/* Examples */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-md p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               📈 Examples
             </h2>
             <div className="space-y-4 text-gray-700">
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-blue-50 p-4 rounded-md">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Example 1: Equal Teams
                 </h3>
@@ -183,7 +185,7 @@ export default function HelpPage() {
                 </p>
               </div>
 
-              <div className="bg-green-50 p-4 rounded-lg">
+              <div className="bg-green-50 p-4 rounded-md">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Example 2: Underdog Wins
                 </h3>
@@ -197,7 +199,7 @@ export default function HelpPage() {
                 </p>
               </div>
 
-              <div className="bg-yellow-50 p-4 rounded-lg">
+              <div className="bg-yellow-50 p-4 rounded-md">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Example 3: Favorite Barely Wins
                 </h3>
@@ -206,7 +208,7 @@ export default function HelpPage() {
                   result: E = 0.76 (76% chance).
                 </p>
                 <p className="text-sm mt-2">
-                  If you win 6-5: S = 0.55, so Δ = 28 × 1.0 × (0.55 - 0.76) =
+                  If you win 7-6: S = 0.55, so Δ = 28 × 1.0 × (0.55 - 0.76) =
                   <strong> -5.9 points</strong> (you lose points!)
                 </p>
               </div>
@@ -214,7 +216,7 @@ export default function HelpPage() {
           </div>
 
           {/* Pages */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-md p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               📱 Pages Guide
             </h2>
@@ -257,7 +259,7 @@ export default function HelpPage() {
           </div>
 
           {/* Tips */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-md p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               💡 Tips to Improve Rating
             </h2>

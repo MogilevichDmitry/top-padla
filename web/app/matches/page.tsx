@@ -133,7 +133,7 @@ export default function MatchesPage() {
       case "to4":
         return "🏸";
       case "to3":
-        return "🎯";
+        return "🚀";
       default:
         return "🎾";
     }
@@ -141,7 +141,7 @@ export default function MatchesPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ru-RU", {
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -152,10 +152,10 @@ export default function MatchesPage() {
 
   if (loading && matches.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading matches...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-500 text-sm">Loading matches...</p>
         </div>
       </div>
     );
@@ -163,78 +163,80 @@ export default function MatchesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-red-800 font-semibold text-lg mb-2">Error</h2>
-          <p className="text-red-600">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-8">
+        <div className="bg-white border border-red-200 rounded-md p-6 max-w-md">
+          <h2 className="text-red-700 font-semibold text-lg mb-2">Error</h2>
+          <p className="text-red-600 text-sm">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 md:py-8 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-4 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
+        <header className="mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
             Match History
           </h1>
-          <p className="text-sm md:text-base text-gray-600">
+          <p className="text-sm md:text-base text-gray-500">
             All matches sorted by date (newest first)
           </p>
         </header>
 
-        <div className="space-y-4">
-          {matches.map((match) => {
+        <div className="space-y-3">
+          {matches.map((match, index) => {
             const teamAWon = match.score_a > match.score_b;
+            // Calculate match number (newest first, so count backwards from total)
+            const matchNumber = pagination?.total
+              ? pagination.total - index
+              : matches.length - index;
             return (
               <div
                 key={match.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-3 md:px-4 md:py-2"
+                className="bg-white rounded-md border border-gray-200 p-4 pt-2"
               >
-                <div className="flex items-center justify-between mb-2 md:mb-1">
-                  <div className="flex items-center space-x-2 md:space-x-3">
-                    <span className="text-xl md:text-2xl">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-semibold text-gray-700">
+                      #{matchNumber}
+                    </span>
+                    <span className="text-lg">
                       {getMatchTypeEmoji(match.type)}
                     </span>
-                    <span className="text-xs md:text-sm font-semibold text-gray-500 uppercase">
-                      {match.type}
-                    </span>
                   </div>
-                  <span className="text-xs md:text-sm text-gray-500">
+                  <span className="text-xs text-gray-500">
                     {formatDate(match.date)}
                   </span>
                 </div>
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
                   <div
-                    className={`flex-1 text-center md:text-right md:pr-4 ${
+                    className={`flex-1 text-center md:text-right md:pr-6 ${
                       teamAWon ? "font-semibold text-gray-900" : "text-gray-600"
                     }`}
                   >
-                    <div className="space-y-0.5 md:space-y-1">
+                    <div className="space-y-1">
                       {match.team_a_names.map((name, idx) => (
-                        <div key={idx} className="text-sm md:text-lg">
+                        <div key={idx} className="text-sm md:text-base">
                           {name}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-center space-x-2 md:space-x-0 md:shrink-0 md:px-6">
+                  <div className="flex items-center justify-center space-x-3 md:shrink-0 md:px-8">
                     <div
-                      className={`text-xl md:text-2xl font-bold ${
-                        teamAWon ? "text-blue-600" : "text-gray-400"
+                      className={`text-2xl md:text-3xl font-bold ${
+                        teamAWon ? "text-gray-900" : "text-gray-400"
                       }`}
                     >
                       {match.score_a}
                     </div>
-                    <div className="text-center text-gray-400 text-sm md:text-base">
-                      —
-                    </div>
+                    <div className="text-gray-300 text-lg">—</div>
                     <div
-                      className={`text-xl md:text-2xl font-bold ${
-                        !teamAWon ? "text-blue-600" : "text-gray-400"
+                      className={`text-2xl md:text-3xl font-bold ${
+                        !teamAWon ? "text-gray-900" : "text-gray-400"
                       }`}
                     >
                       {match.score_b}
@@ -242,15 +244,15 @@ export default function MatchesPage() {
                   </div>
 
                   <div
-                    className={`flex-1 text-center md:text-left md:pl-4 ${
+                    className={`flex-1 text-center md:text-left md:pl-6 ${
                       !teamAWon
                         ? "font-semibold text-gray-900"
                         : "text-gray-600"
                     }`}
                   >
-                    <div className="space-y-0.5 md:space-y-1">
+                    <div className="space-y-1">
                       {match.team_b_names.map((name, idx) => (
-                        <div key={idx} className="text-sm md:text-lg">
+                        <div key={idx} className="text-sm md:text-base">
                           {name}
                         </div>
                       ))}
@@ -266,8 +268,8 @@ export default function MatchesPage() {
         <div ref={observerTarget} className="py-8">
           {loadingMore && (
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600 text-sm">Loading more...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-gray-900 mx-auto"></div>
+              <p className="mt-2 text-gray-500 text-sm">Loading more...</p>
             </div>
           )}
           {!pagination?.hasMore && matches.length > 0 && (

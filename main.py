@@ -134,8 +134,6 @@ def get_player_stats(db: DB, player_id: int) -> Dict:
     matches_played = 0
     wins = 0
     losses = 0
-    total_score_for = 0
-    total_score_against = 0
     partner_stats = {}  # {partner_id: {"games": count, "wins": count, "losses": count}}
     opponent_stats = {}  # {opponent_id: {"games": count, "wins": count, "losses": count}}
     biggest_win = None  # (score_for, score_against)
@@ -155,9 +153,6 @@ def get_player_stats(db: DB, player_id: int) -> Dict:
             if partner_id not in partner_stats:
                 partner_stats[partner_id] = {"games": 0, "wins": 0, "losses": 0}
             partner_stats[partner_id]["games"] += 1
-            
-            total_score_for += match.score_a
-            total_score_against += match.score_b
             
             # Track biggest win/loss
             if match.score_a > match.score_b:
@@ -206,9 +201,6 @@ def get_player_stats(db: DB, player_id: int) -> Dict:
                 partner_stats[partner_id] = {"games": 0, "wins": 0, "losses": 0}
             partner_stats[partner_id]["games"] += 1
             
-            total_score_for += match.score_b
-            total_score_against += match.score_a
-            
             # Track biggest win/loss
             if match.score_b > match.score_a:
                 wins += 1
@@ -249,8 +241,6 @@ def get_player_stats(db: DB, player_id: int) -> Dict:
                     opponent_stats[opp]["losses"] += 1
     
     win_rate = (wins / matches_played * 100) if matches_played > 0 else 0
-    avg_score_for = total_score_for / matches_played if matches_played > 0 else 0
-    avg_score_against = total_score_against / matches_played if matches_played > 0 else 0
     
     # Find best partner (by win rate, minimum 3 games)
     best_partner_id = None
@@ -299,8 +289,6 @@ def get_player_stats(db: DB, player_id: int) -> Dict:
         "wins": wins,
         "losses": losses,
         "win_rate": win_rate,
-        "avg_score_for": avg_score_for,
-        "avg_score_against": avg_score_against,
         "best_partner": best_partner_id,
         "best_partner_wr": best_partner_wr if best_partner_id else None,
         "worst_partner": worst_partner_id,
@@ -394,8 +382,6 @@ def get_versus_stats(db: DB, p1_id: int, p2_id: int) -> Dict:
     p1_wins = 0
     p2_wins = 0
     total_matches = 0
-    scores_p1 = []
-    scores_p2 = []
     
     for match in db.matches.values():
         p1_in_a = p1_id in match.team_a
@@ -407,29 +393,20 @@ def get_versus_stats(db: DB, p1_id: int, p2_id: int) -> Dict:
         if (p1_in_a and p2_in_b) or (p1_in_b and p2_in_a):
             total_matches += 1
             if p1_in_a:
-                scores_p1.append(match.score_a)
-                scores_p2.append(match.score_b)
                 if match.score_a > match.score_b:
                     p1_wins += 1
                 else:
                     p2_wins += 1
             else:
-                scores_p1.append(match.score_b)
-                scores_p2.append(match.score_a)
                 if match.score_b > match.score_a:
                     p1_wins += 1
                 else:
                     p2_wins += 1
     
-    avg_p1 = sum(scores_p1) / len(scores_p1) if scores_p1 else 0
-    avg_p2 = sum(scores_p2) / len(scores_p2) if scores_p2 else 0
-    
     return {
         "total": total_matches,
         "p1_wins": p1_wins,
-        "p2_wins": p2_wins,
-        "avg_p1": avg_p1,
-        "avg_p2": avg_p2
+        "p2_wins": p2_wins
     }
 
 
@@ -862,13 +839,13 @@ async def rating_explanation_cmd(m: Message):
             "1. <b>Ожидаемый результат:</b> E = 1/(1 + 10^((R_B - R_A)/400))\n"
             "   где R_A и R_B - средние рейтинги команд\n\n"
             
-            "2. <b>Фактический результат:</b> S = 0.5 + 0.5 * (разница_очков / максимум_очков)\n"
-            "   • Победа 6-0: S = 1.0 (максимум)\n"
-            "   • Победа 6-3: S = 0.75\n"
-            "   • Победа 6-5: S = 0.58\n"
-            "   • Поражение 5-6: S = 0.42\n"
-            "   • Поражение 3-6: S = 0.25\n"
-            "   • Поражение 0-6: S = 0.0 (минимум)\n\n"
+            "2. <b>Фактический результат:</b> S = 0.5 + 0.3 * (разница_очков / максимум_очков)\n"
+            "   • Победа 6-0: S = 0.8 (максимум)\n"
+            "   • Победа 6-3: S = 0.65\n"
+            "   • Победа 7-6: S = 0.55 (тайбрейк)\n"
+            "   • Поражение 6-7: S = 0.45 (тайбрейк)\n"
+            "   • Поражение 3-6: S = 0.35\n"
+            "   • Поражение 0-6: S = 0.2 (минимум)\n\n"
             
             "3. <b>Изменение рейтинга:</b> Δ = K × L × (S - E)\n"
             "   где L - модификатор типа игры\n\n"
@@ -913,7 +890,7 @@ async def rating_explanation_cmd(m: Message):
             
             "⚖️ <b>Что влияет на изменение:</b>\n"
             "• <b>Сила соперника:</b> победа над сильным = больше очков\n"
-            "• <b>Размер победы:</b> 6-0 дает больше очков чем 6-5\n"
+            "• <b>Размер победы:</b> 6-0 дает больше очков чем 7-6\n"
             "• <b>Тип игры:</b> до 6 очков = полный эффект, до 4 = 80%, до 3 = 70%\n\n"
             
             "📊 <b>Примеры:</b>\n"
@@ -1433,7 +1410,6 @@ async def stats_cmd(m: Message):
         f"✅ Побед: {stats['wins']}\n"
         f"❌ Поражений: {stats['losses']}\n"
         f"📈 Винрейт: {stats['win_rate']:.1f}%{to6_stats_text}{to4_stats_text}{to3_stats_text}\n"
-        f"⚡ Средний счёт: {stats['avg_score_for']:.1f} — {stats['avg_score_against']:.1f}\n"
         f"💪 Самая крупная победа: {biggest_win_text}\n"
         f"💔 Самое крупное поражение: {biggest_loss_text}\n"
         f"🤝 Лучший тимейт: {best_partner_text}\n"
@@ -1659,8 +1635,7 @@ async def versus_cmd(m: Message):
         f"{p1.name} vs {p2.name}\n\n"
         f"Личные встречи: {stats['total']} матч(ей)\n"
         f"Победы {p1.name}: {stats['p1_wins']} ({p1_wr:.1f}%)\n"
-        f"Победы {p2.name}: {stats['p2_wins']} ({p2_wr:.1f}%)\n"
-        f"Средний счёт: {stats['avg_p1']:.1f} — {stats['avg_p2']:.1f}"
+        f"Победы {p2.name}: {stats['p2_wins']} ({p2_wr:.1f}%)"
     )
     
     await m.answer(message)
