@@ -52,19 +52,17 @@ export async function getPairs(): Promise<Pair[]> {
 }
 
 export async function createMatch(match: Omit<Match, "id">): Promise<Match> {
+  // Convert arrays to PostgreSQL array format
+  const teamAStr = `{${match.team_a.join(",")}}`;
+  const teamBStr = `{${match.team_b.join(",")}}`;
+
   const { rows } = await sql<Match>`
     INSERT INTO matches (date, type, team_a, team_b, score_a, score_b, created_by)
     VALUES (
       ${match.date},
       ${match.type},
-      ARRAY[${sql.join(
-        match.team_a.map((id) => sql`${id}`),
-        sql`, `
-      )}]::integer[],
-      ARRAY[${sql.join(
-        match.team_b.map((id) => sql`${id}`),
-        sql`, `
-      )}]::integer[],
+      ${teamAStr}::integer[],
+      ${teamBStr}::integer[],
       ${match.score_a},
       ${match.score_b},
       ${match.created_by}
