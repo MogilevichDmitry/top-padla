@@ -221,7 +221,7 @@ export default function MatchesPage() {
                     </div>
                   </div>
 
-                  <div className="flex-shrink-0 px-6">
+                  <div className="shrink-0 px-6">
                     <div
                       className={`text-2xl font-bold ${
                         teamAWon ? "text-blue-600" : "text-gray-400"
