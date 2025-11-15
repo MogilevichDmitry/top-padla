@@ -1,4 +1,4 @@
-import { Match, Player } from './db';
+import { Match, Player } from "./db";
 
 // Constants
 const START_RATING = 1000;
@@ -12,7 +12,12 @@ export function expected(teamA: number, teamB: number): number {
   return 1.0 / (1.0 + Math.pow(10, (teamB - teamA) / 400.0));
 }
 
-export function actualS(scoreA: number, scoreB: number, T: number, matchType: string): number {
+export function actualS(
+  scoreA: number,
+  scoreB: number,
+  T: number,
+  _matchType: string
+): number {
   const gd = scoreA - scoreB;
   const margin = Math.max(-1.0, Math.min(1.0, gd / T));
   // Reduce score influence by 40% for all match types (0.5 * 0.6 = 0.3)
@@ -21,16 +26,16 @@ export function actualS(scoreA: number, scoreB: number, T: number, matchType: st
 }
 
 export function getLByType(type: string): number {
-  if (type === 'to6') return L_TO6;
-  if (type === 'to4') return L_TO4;
-  if (type === 'to3') return L_TO3;
+  if (type === "to6") return L_TO6;
+  if (type === "to4") return L_TO4;
+  if (type === "to3") return L_TO3;
   return L_TO6; // default
 }
 
 export function getTByType(type: string): number {
-  if (type === 'to6') return 6;
-  if (type === 'to4') return 4;
-  if (type === 'to3') return 3;
+  if (type === "to6") return 6;
+  if (type === "to4") return 4;
+  if (type === "to3") return 3;
   return 6; // default
 }
 
@@ -44,9 +49,9 @@ export function calculateRatings(
   cutoffDate?: Date
 ): RatingTable {
   const ratings: RatingTable = {};
-  
+
   // Initialize ratings
-  players.forEach(player => {
+  players.forEach((player) => {
     ratings[player.id] = START_RATING;
   });
 
@@ -88,6 +93,12 @@ export function calculateRatings(
   return ratings;
 }
 
+export interface PartnerStats {
+  games: number;
+  wins: number;
+  losses: number;
+}
+
 export interface PlayerStats {
   matches: number;
   wins: number;
@@ -101,20 +112,32 @@ export interface PlayerStats {
   to4Losses: number;
   to3Wins: number;
   to3Losses: number;
+  bestPartner?: number;
+  bestPartnerWR?: number;
+  worstPartner?: number;
+  worstPartnerWR?: number;
+  partnerStats: { [playerId: number]: PartnerStats };
 }
 
-export function getPlayerStats(playerId: number, matches: Match[]): PlayerStats {
+export function getPlayerStats(
+  playerId: number,
+  matches: Match[]
+): PlayerStats {
   let totalMatches = 0;
   let wins = 0;
   let losses = 0;
   let totalScoreFor = 0;
   let totalScoreAgainst = 0;
-  let to6Wins = 0, to6Losses = 0;
-  let to4Wins = 0, to4Losses = 0;
-  let to3Wins = 0, to3Losses = 0;
+  let to6Wins = 0,
+    to6Losses = 0;
+  let to4Wins = 0,
+    to4Losses = 0;
+  let to3Wins = 0,
+    to3Losses = 0;
+  const partnerStats: { [key: number]: PartnerStats } = {};
 
   for (const match of matches) {
-    if (match.team_a.includes(playerId)) {
+    if (match.team_a.includes(playerId) && match.team_a.length === 2) {
       totalMatches++;
       totalScoreFor += match.score_a;
       totalScoreAgainst += match.score_b;
@@ -123,17 +146,28 @@ export function getPlayerStats(playerId: number, matches: Match[]): PlayerStats 
       if (won) wins++;
       else losses++;
 
-      if (match.type === 'to6') {
+      // Track partner stats
+      const partnerId = match.team_a.find((p) => p !== playerId);
+      if (partnerId) {
+        if (!partnerStats[partnerId]) {
+          partnerStats[partnerId] = { games: 0, wins: 0, losses: 0 };
+        }
+        partnerStats[partnerId].games++;
+        if (won) partnerStats[partnerId].wins++;
+        else partnerStats[partnerId].losses++;
+      }
+
+      if (match.type === "to6") {
         if (won) to6Wins++;
         else to6Losses++;
-      } else if (match.type === 'to4') {
+      } else if (match.type === "to4") {
         if (won) to4Wins++;
         else to4Losses++;
-      } else if (match.type === 'to3') {
+      } else if (match.type === "to3") {
         if (won) to3Wins++;
         else to3Losses++;
       }
-    } else if (match.team_b.includes(playerId)) {
+    } else if (match.team_b.includes(playerId) && match.team_b.length === 2) {
       totalMatches++;
       totalScoreFor += match.score_b;
       totalScoreAgainst += match.score_a;
@@ -142,15 +176,47 @@ export function getPlayerStats(playerId: number, matches: Match[]): PlayerStats 
       if (won) wins++;
       else losses++;
 
-      if (match.type === 'to6') {
+      // Track partner stats
+      const partnerId = match.team_b.find((p) => p !== playerId);
+      if (partnerId) {
+        if (!partnerStats[partnerId]) {
+          partnerStats[partnerId] = { games: 0, wins: 0, losses: 0 };
+        }
+        partnerStats[partnerId].games++;
+        if (won) partnerStats[partnerId].wins++;
+        else partnerStats[partnerId].losses++;
+      }
+
+      if (match.type === "to6") {
         if (won) to6Wins++;
         else to6Losses++;
-      } else if (match.type === 'to4') {
+      } else if (match.type === "to4") {
         if (won) to4Wins++;
         else to4Losses++;
-      } else if (match.type === 'to3') {
+      } else if (match.type === "to3") {
         if (won) to3Wins++;
         else to3Losses++;
+      }
+    }
+  }
+
+  // Find best and worst partners (minimum 3 games)
+  let bestPartner: number | undefined;
+  let bestPartnerWR = 0;
+  let worstPartner: number | undefined;
+  let worstPartnerWR = 100;
+
+  for (const [partnerIdStr, stats] of Object.entries(partnerStats)) {
+    const partnerId = parseInt(partnerIdStr);
+    if (stats.games >= 3) {
+      const wr = (stats.wins / stats.games) * 100;
+      if (wr > bestPartnerWR) {
+        bestPartner = partnerId;
+        bestPartnerWR = wr;
+      }
+      if (wr < worstPartnerWR) {
+        worstPartner = partnerId;
+        worstPartnerWR = wr;
       }
     }
   }
@@ -168,6 +234,10 @@ export function getPlayerStats(playerId: number, matches: Match[]): PlayerStats 
     to4Losses,
     to3Wins,
     to3Losses,
+    bestPartner,
+    bestPartnerWR: bestPartner ? bestPartnerWR : undefined,
+    worstPartner,
+    worstPartnerWR: worstPartner ? worstPartnerWR : undefined,
+    partnerStats,
   };
 }
-

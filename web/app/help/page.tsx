@@ -5,7 +5,9 @@ export default function HelpPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-8">
       <div className="max-w-4xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Help & Guide</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Help & Guide
+          </h1>
           <p className="text-gray-600">Learn how the rating system works</p>
         </header>
 
@@ -32,11 +34,11 @@ export default function HelpPage() {
                   </li>
                   <li>
                     <strong>Score margin:</strong> Winning 6-0 gives more points
-                    than 6-5
+                    than 6-4
                   </li>
                   <li>
-                    <strong>Match type:</strong> Different formats have different
-                    point multipliers
+                    <strong>Match type:</strong> Different formats have
+                    different point multipliers
                   </li>
                 </ul>
               </div>
@@ -56,9 +58,9 @@ export default function HelpPage() {
                   Time Window
                 </h3>
                 <p>
-                  Only matches from the last <strong>182 days</strong> (6 months)
-                  are considered for rating calculations. Older matches don't
-                  affect your current rating, allowing it to adapt to your
+                  Only matches from the last <strong>182 days</strong> (6
+                  months) are considered for rating calculations. Older matches
+                  don't affect your current rating, allowing it to adapt to your
                   current form.
                 </p>
               </div>
@@ -76,8 +78,8 @@ export default function HelpPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900">To 6 Points</h3>
                   <p className="text-sm">
-                    Full rating effect (100%). Valid scores: 6-0, 6-1, 6-2,
-                    6-3, 6-4, 7-6 (tiebreak)
+                    Full rating effect (100%). Valid scores: 6-0, 6-1, 6-2, 6-3,
+                    6-4, 7-6 (tiebreak)
                   </p>
                 </div>
               </div>
@@ -138,7 +140,8 @@ export default function HelpPage() {
                   <li>Lose 0-6: S = 0.2 (minimum)</li>
                 </ul>
                 <p className="text-xs text-gray-500 mt-2">
-                  Score influence is reduced by 40% (margin factor = 0.3) for all match types
+                  Score influence is reduced by 40% (margin factor = 0.3) for
+                  all match types
                 </p>
               </div>
 
@@ -171,8 +174,8 @@ export default function HelpPage() {
                   Example 1: Equal Teams
                 </h3>
                 <p className="text-sm">
-                  Two teams with rating 1000 play each other. Expected result:
-                  E = 0.5 (50% chance each).
+                  Two teams with rating 1000 play each other. Expected result: E
+                  = 0.5 (50% chance each).
                 </p>
                 <p className="text-sm mt-2">
                   If you win 6-3: S = 0.65, so Δ = 28 × 1.0 × (0.65 - 0.5) =
@@ -271,7 +274,7 @@ export default function HelpPage() {
                 <span className="text-blue-600 font-bold">•</span>
                 <span>
                   <strong>Aim for decisive victories:</strong> Winning 6-0 gives
-                  more points than 6-5.
+                  more points than 6-4.
                 </span>
               </li>
               <li className="flex items-start space-x-2">
@@ -296,4 +299,3 @@ export default function HelpPage() {
     </div>
   );
 }
-
