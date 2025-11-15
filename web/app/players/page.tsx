@@ -56,14 +56,20 @@ export default function PlayersPage() {
     }
   };
 
-  // Calculate ranks based on rating (always by rating, regardless of current sort)
-  const playersByRating = [...players].sort((a, b) => b.rating - a.rating);
+  // Calculate ranks based on rating (only for active players)
+  const activePlayersByRating = [...players]
+    .filter((p) => p.matches > 0)
+    .sort((a, b) => b.rating - a.rating);
   const rankMap = new Map<number, number>();
-  playersByRating.forEach((player, index) => {
+  activePlayersByRating.forEach((player, index) => {
     rankMap.set(player.id, index + 1);
   });
 
-  const sortedPlayers = [...players].sort((a, b) => {
+  // Separate active and inactive players
+  const activePlayers = players.filter((p) => p.matches > 0);
+  const inactivePlayers = players.filter((p) => p.matches === 0);
+
+  const sortedActivePlayers = [...activePlayers].sort((a, b) => {
     let comparison = 0;
     if (sortBy === "rating") {
       comparison = a.rating - b.rating;
@@ -74,6 +80,11 @@ export default function PlayersPage() {
     }
     return sortOrder === "asc" ? comparison : -comparison;
   });
+
+  // Sort inactive players by name
+  const sortedInactivePlayers = [...inactivePlayers].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
   if (loading) {
     return (
@@ -112,7 +123,7 @@ export default function PlayersPage() {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {/* Mobile view - cards */}
           <div className="md:hidden">
-            {sortedPlayers.map((player) => (
+            {sortedActivePlayers.map((player) => (
               <div
                 key={player.id}
                 className="bg-white p-4 border-b border-b-gray-200"
@@ -274,7 +285,7 @@ export default function PlayersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
-                {sortedPlayers.map((player) => (
+                {sortedActivePlayers.map((player) => (
                   <tr
                     key={player.id}
                     className="hover:bg-gray-50/50 transition-colors"
@@ -339,15 +350,120 @@ export default function PlayersPage() {
             </table>
           </div>
 
-          {players.length === 0 && (
+          {activePlayers.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No players found</p>
+              <p className="text-gray-500 text-lg">No active players found</p>
             </div>
           )}
         </div>
 
+        {/* Inactive Players */}
+        {inactivePlayers.length > 0 && (
+          <div className="mt-6 bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="px-4 md:px-6 py-3 border-b border-gray-200 bg-gray-50">
+              <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                Inactive Players
+              </h2>
+            </div>
+            {/* Mobile view - cards */}
+            <div className="md:hidden">
+              {sortedInactivePlayers.map((player) => (
+                <div
+                  key={player.id}
+                  className="bg-white p-4 border-b border-b-gray-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={`/players/${nameToSlug(player.name)}`}
+                      className="font-semibold text-gray-500 text-lg hover:text-blue-600 hover:underline"
+                    >
+                      {player.name}{" "}
+                      <span className="text-xs text-gray-400 font-normal">
+                        (inactive)
+                      </span>
+                    </Link>
+                    <span className="text-xl font-bold text-gray-400">
+                      {Math.floor(player.rating)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop view - table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50/50">
+                  <tr>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Player
+                    </th>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Rating
+                    </th>
+                    <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Matches
+                    </th>
+                    <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      W-L
+                    </th>
+                    <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Win %
+                    </th>
+                    <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Match Types
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {sortedInactivePlayers.map((player) => (
+                    <tr
+                      key={player.id}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link
+                          href={`/players/${nameToSlug(player.name)}`}
+                          className="text-sm font-semibold text-gray-500 hover:text-blue-600 hover:underline"
+                        >
+                          {player.name}{" "}
+                          <span className="text-xs text-gray-400 font-normal">
+                            (inactive)
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
+                        <span className="text-base font-bold text-gray-400">
+                          {Math.floor(player.rating)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-400">
+                        —
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-400">
+                        —
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <span className="text-xs text-gray-400">—</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="text-xs text-gray-400">—</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         <div className="mt-8 text-center text-gray-600 text-sm">
-          <p>Total players: {players.length}</p>
+          <p>
+            Total players: {players.length} ({activePlayers.length} active
+            {inactivePlayers.length > 0 &&
+              `, ${inactivePlayers.length} inactive`}
+            )
+          </p>
         </div>
       </div>
     </div>

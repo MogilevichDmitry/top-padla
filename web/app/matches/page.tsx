@@ -184,7 +184,7 @@ export default function MatchesPage() {
           </p>
         </header>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {matches.map((match, index) => {
             const teamAWon = match.score_a > match.score_b;
             // Calculate match number (newest first, so count backwards from total)
@@ -194,68 +194,87 @@ export default function MatchesPage() {
             return (
               <div
                 key={match.id}
-                className="bg-white md:rounded-md border border-gray-200 border-b border-gray-300 p-4 pt-2"
+                className="bg-white md:rounded-lg border border-gray-200 hover:border-gray-300 transition-colors overflow-hidden"
               >
-                <div className="flex items-center justify-between mb-1">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-semibold text-gray-700">
+                    <span className="text-xs font-bold text-gray-500">
                       #{matchNumber}
                     </span>
-                    <span className="text-lg">
+                    <span className="text-base">
                       {getMatchTypeEmoji(match.type)}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 font-medium">
                     {formatDate(match.date)}
                   </span>
                 </div>
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
-                  <div
-                    className={`flex-1 text-center md:text-right md:pr-6 ${
-                      teamAWon ? "font-semibold text-gray-900" : "text-gray-600"
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      {match.team_a_names.map((name, idx) => (
-                        <div key={idx} className="text-sm md:text-base">
-                          {name}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-center space-x-3 md:shrink-0 md:px-8">
+                {/* Match Content */}
+                <div className="p-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    {/* Team A */}
                     <div
-                      className={`text-2xl md:text-3xl font-bold ${
-                        teamAWon ? "text-gray-900" : "text-gray-400"
+                      className={`flex-1 text-center md:text-right md:pr-4 ${
+                        teamAWon
+                          ? "font-semibold text-gray-900"
+                          : "text-gray-600"
                       }`}
                     >
-                      {match.score_a}
+                      <div className="space-y-0.5">
+                        {match.team_a_names.map((name, idx) => (
+                          <div
+                            key={idx}
+                            className={`text-sm md:text-base ${
+                              teamAWon ? "text-gray-900" : "text-gray-600"
+                            }`}
+                          >
+                            {name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="text-gray-300 text-lg">—</div>
+
+                    {/* Score */}
+                    <div className="flex items-center justify-center space-x-4 md:shrink-0 md:px-6">
+                      <div
+                        className={`text-3xl md:text-4xl font-bold ${
+                          teamAWon ? "text-green-600" : "text-gray-300"
+                        }`}
+                      >
+                        {match.score_a}
+                      </div>
+                      <div className="text-gray-300 text-xl font-light">—</div>
+                      <div
+                        className={`text-3xl md:text-4xl font-bold ${
+                          !teamAWon ? "text-green-600" : "text-gray-300"
+                        }`}
+                      >
+                        {match.score_b}
+                      </div>
+                    </div>
+
+                    {/* Team B */}
                     <div
-                      className={`text-2xl md:text-3xl font-bold ${
-                        !teamAWon ? "text-gray-900" : "text-gray-400"
+                      className={`flex-1 text-center md:text-left md:pl-4 ${
+                        !teamAWon
+                          ? "font-semibold text-gray-900"
+                          : "text-gray-600"
                       }`}
                     >
-                      {match.score_b}
-                    </div>
-                  </div>
-
-                  <div
-                    className={`flex-1 text-center md:text-left md:pl-6 ${
-                      !teamAWon
-                        ? "font-semibold text-gray-900"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      {match.team_b_names.map((name, idx) => (
-                        <div key={idx} className="text-sm md:text-base">
-                          {name}
-                        </div>
-                      ))}
+                      <div className="space-y-0.5">
+                        {match.team_b_names.map((name, idx) => (
+                          <div
+                            key={idx}
+                            className={`text-sm md:text-base ${
+                              !teamAWon ? "text-gray-900" : "text-gray-600"
+                            }`}
+                          >
+                            {name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

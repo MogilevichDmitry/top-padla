@@ -166,7 +166,8 @@ export default function PlayerPage() {
                   {data.player.name}
                 </h1>
                 <p className="text-gray-300 text-lg mt-1">
-                  Rating: {Math.floor(data.player.rating)} (#{data.player.rank})
+                  Rating: {Math.floor(data.player.rating)}
+                  {data.player.rank && ` (#${data.player.rank})`}
                 </p>
               </div>
               <Link
@@ -293,7 +294,8 @@ export default function PlayerPage() {
             <div>
               <p className="text-gray-500 text-sm">Current Rating</p>
               <p className="text-2xl font-bold text-gray-900">
-                {Math.floor(data.progress.currentRating)} (#{data.player.rank})
+                {Math.floor(data.progress.currentRating)}
+                {data.player.rank && ` (#${data.player.rank})`}
               </p>
             </div>
             <div>
@@ -318,54 +320,105 @@ export default function PlayerPage() {
 
         {/* Performance */}
         <div className="bg-white rounded-md p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Performance</h2>
-          <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Performance</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {data.performance.vsStrong.total > 0 && (
-              <div>
-                <p className="text-gray-700 font-semibold">
-                  💪 Against Strong (+50 and above)
-                </p>
-                <p className="text-sm text-gray-500">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-2xl">💪</span>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Against Strong
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-600 mb-4">
                   Opponents with rating at least 50 points higher
                 </p>
-                <p className="text-lg font-bold text-gray-900 mt-1">
-                  {data.performance.vsStrong.wins}-
-                  {data.performance.vsStrong.losses} (
-                  {data.performance.vsStrong.winRate.toFixed(0)}%) from{" "}
-                  {data.performance.vsStrong.total} matches
-                </p>
+                <div className="space-y-1">
+                  <div className="flex items-baseline space-x-2">
+                    <span className="text-3xl font-bold text-gray-900">
+                      {data.performance.vsStrong.wins}-
+                      {data.performance.vsStrong.losses}
+                    </span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        data.performance.vsStrong.winRate >= 50
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      ({data.performance.vsStrong.winRate.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    from {data.performance.vsStrong.total} matches
+                  </p>
+                </div>
               </div>
             )}
             {data.performance.vsEqual.total > 0 && (
-              <div>
-                <p className="text-gray-700 font-semibold">
-                  ⚖️ Against Equal (±50)
-                </p>
-                <p className="text-sm text-gray-500">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-2xl">⚖️</span>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Against Equal
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-600 mb-4">
                   Opponents with rating within ±50 points
                 </p>
-                <p className="text-lg font-bold text-gray-900 mt-1">
-                  {data.performance.vsEqual.wins}-
-                  {data.performance.vsEqual.losses} (
-                  {data.performance.vsEqual.winRate.toFixed(0)}%) from{" "}
-                  {data.performance.vsEqual.total} matches
-                </p>
+                <div className="space-y-1">
+                  <div className="flex items-baseline space-x-2">
+                    <span className="text-3xl font-bold text-gray-900">
+                      {data.performance.vsEqual.wins}-
+                      {data.performance.vsEqual.losses}
+                    </span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        data.performance.vsEqual.winRate >= 50
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      ({data.performance.vsEqual.winRate.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    from {data.performance.vsEqual.total} matches
+                  </p>
+                </div>
               </div>
             )}
             {data.performance.vsWeak.total > 0 && (
-              <div>
-                <p className="text-gray-700 font-semibold">
-                  📉 Against Weak (-50 and below)
-                </p>
-                <p className="text-sm text-gray-500">
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-5">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-2xl">📉</span>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Against Weak
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-600 mb-4">
                   Opponents with rating at least 50 points lower
                 </p>
-                <p className="text-lg font-bold text-gray-900 mt-1">
-                  {data.performance.vsWeak.wins}-
-                  {data.performance.vsWeak.losses} (
-                  {data.performance.vsWeak.winRate.toFixed(0)}%) from{" "}
-                  {data.performance.vsWeak.total} matches
-                </p>
+                <div className="space-y-1">
+                  <div className="flex items-baseline space-x-2">
+                    <span className="text-3xl font-bold text-gray-900">
+                      {data.performance.vsWeak.wins}-
+                      {data.performance.vsWeak.losses}
+                    </span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        data.performance.vsWeak.winRate >= 50
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      ({data.performance.vsWeak.winRate.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    from {data.performance.vsWeak.total} matches
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -413,13 +466,13 @@ export default function PlayerPage() {
 
         {/* All Partners */}
         {data.partners.all.length > 0 && (
-          <div className="bg-white rounded-md p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-md py-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 px-6">
               All Partners
             </h2>
 
             {/* Mobile view - cards */}
-            <div className="md:hidden space-y-0">
+            <div className="md:hidden space-y-0 px-3">
               {[...data.partners.all]
                 .sort((a, b) => {
                   let comparison = 0;
@@ -473,7 +526,7 @@ export default function PlayerPage() {
             </div>
 
             {/* Desktop view - table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto px-2">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
@@ -650,9 +703,6 @@ export default function PlayerPage() {
                       const partnerName =
                         partnerIndex !== -1 ? myTeamNames[partnerIndex] : null;
 
-                      const oppTeamIds = isTeamA
-                        ? match.team_b_ids
-                        : match.team_a_ids;
                       const oppTeamNames = isTeamA
                         ? match.team_b_names
                         : match.team_a_names;

@@ -125,7 +125,7 @@ export default function RecordsPage() {
             </h2>
             <div className="space-y-3">
               {records.highest_player && (
-                <div className="flex items-center justify-between p-3 bg-amber-50/50 border border-amber-100 rounded-md">
+                <div className="flex items-center justify-between p-3 bg-emerald-50/50 border border-emerald-100 rounded-md">
                   <div>
                     <div className="text-xs text-gray-500 mb-1">
                       Highest Rating
@@ -135,7 +135,7 @@ export default function RecordsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-amber-700">
+                    <div className="text-xl font-bold text-emerald-700">
                       {records.highest_rating
                         ? Math.floor(records.highest_rating)
                         : null}

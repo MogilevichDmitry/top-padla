@@ -31,17 +31,23 @@ export async function GET(
     // Calculate current ratings
     const ratings = calculateRatings(players, matches);
 
-    // Calculate player rank
-    const sortedPlayers = players
-      .map((p) => ({
-        id: p.id,
-        rating: ratings[p.id] || 1000,
-      }))
-      .sort((a, b) => b.rating - a.rating);
-    const playerRank = sortedPlayers.findIndex((p) => p.id === playerId) + 1;
-
     // Get player stats
     const stats = getPlayerStats(playerId, matches);
+
+    // Calculate player rank (only among active players with matches)
+    const sortedActivePlayers = players
+      .map((p) => {
+        const playerStats = getPlayerStats(p.id, matches);
+        return {
+          id: p.id,
+          rating: ratings[p.id] || 1000,
+          matches: playerStats.matches,
+        };
+      })
+      .filter((p) => p.matches > 0) // Only players with matches
+      .sort((a, b) => b.rating - a.rating);
+    const playerRank =
+      sortedActivePlayers.findIndex((p) => p.id === playerId) + 1;
 
     // Get rating history for progress
     const ratingHistory = getRatingHistory(playerId, players, matches);
@@ -132,7 +138,7 @@ export async function GET(
         id: player.id,
         name: player.name,
         rating: currentRating,
-        rank: playerRank,
+        rank: stats.matches > 0 ? playerRank : null, // Only set rank if player has matches
       },
       stats,
       streaks,
