@@ -56,39 +56,42 @@ export default function MatchesPage() {
     fetchPlayers();
   }, []);
 
-  const fetchMatches = useCallback(async (page: number = 1) => {
-    try {
-      setLoadingMore(true);
-      const response = await fetch(`/api/matches?page=${page}&limit=20`);
-      if (!response.ok) throw new Error("Failed to fetch matches");
-      const data = await response.json();
+  const fetchMatches = useCallback(
+    async (page: number = 1) => {
+      try {
+        setLoadingMore(true);
+        const response = await fetch(`/api/matches?page=${page}&limit=50`);
+        if (!response.ok) throw new Error("Failed to fetch matches");
+        const data = await response.json();
 
-      // Add player names to matches
-      const matchesWithNames = data.matches.map((match: Match) => {
-        const getPlayerName = (playerId: number): string => {
-          const player = players.find((p) => p.id === playerId);
-          return player?.name || `Player ${playerId}`;
-        };
-        return {
-          ...match,
-          team_a_names: match.team_a.map((id) => getPlayerName(id)),
-          team_b_names: match.team_b.map((id) => getPlayerName(id)),
-        };
-      });
+        // Add player names to matches
+        const matchesWithNames = data.matches.map((match: Match) => {
+          const getPlayerName = (playerId: number): string => {
+            const player = players.find((p) => p.id === playerId);
+            return player?.name || `Player ${playerId}`;
+          };
+          return {
+            ...match,
+            team_a_names: match.team_a.map((id) => getPlayerName(id)),
+            team_b_names: match.team_b.map((id) => getPlayerName(id)),
+          };
+        });
 
-      if (page === 1) {
-        setMatches(matchesWithNames);
-      } else {
-        setMatches((prev) => [...prev, ...matchesWithNames]);
+        if (page === 1) {
+          setMatches(matchesWithNames);
+        } else {
+          setMatches((prev) => [...prev, ...matchesWithNames]);
+        }
+        setPagination(data.pagination);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-      setPagination(data.pagination);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [players]);
+    },
+    [players]
+  );
 
   useEffect(() => {
     if (players.length > 0) {
@@ -187,9 +190,9 @@ export default function MatchesPage() {
             return (
               <div
                 key={match.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
+                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow px-4 py-2"
               >
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">
                       {getMatchTypeEmoji(match.type)}
@@ -220,7 +223,7 @@ export default function MatchesPage() {
 
                   <div className="flex-shrink-0 px-6">
                     <div
-                      className={`text-3xl font-bold ${
+                      className={`text-2xl font-bold ${
                         teamAWon ? "text-blue-600" : "text-gray-400"
                       }`}
                     >
@@ -228,7 +231,7 @@ export default function MatchesPage() {
                     </div>
                     <div className="text-center text-gray-400 text-sm">—</div>
                     <div
-                      className={`text-3xl font-bold ${
+                      className={`text-2xl font-bold ${
                         !teamAWon ? "text-blue-600" : "text-gray-400"
                       }`}
                     >
@@ -238,7 +241,9 @@ export default function MatchesPage() {
 
                   <div
                     className={`flex-1 text-left pl-4 ${
-                      !teamAWon ? "font-semibold text-gray-900" : "text-gray-600"
+                      !teamAWon
+                        ? "font-semibold text-gray-900"
+                        : "text-gray-600"
                     }`}
                   >
                     <div className="space-y-1">
@@ -273,4 +278,3 @@ export default function MatchesPage() {
     </div>
   );
 }
-
