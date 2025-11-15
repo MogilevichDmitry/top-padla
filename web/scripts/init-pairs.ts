@@ -59,7 +59,8 @@ async function updatePairRating(
 ) {
   const E = expected(pair.rating, opponentPair.rating);
   const T = getTByType(matchType);
-  const S = actualS(scoreDiff, 0, T, matchType);
+  // Use score_diff if won, -score_diff if lost (same as Python)
+  const S = actualS(won ? scoreDiff : -scoreDiff, 0, T, matchType);
   const L = getLByType(matchType);
   const delta = K_BASE * L * (S - E);
 
@@ -123,21 +124,11 @@ async function initializePairs() {
       // Update pair ratings
       const scoreDiff = match.score_a - match.score_b;
       const wonA = match.score_a > match.score_b;
+      // Use abs(score_diff) like in Python, then actualS handles sign based on won
+      const absScoreDiff = Math.abs(scoreDiff);
 
-      await updatePairRating(
-        pairA,
-        pairB,
-        wonA,
-        Math.abs(scoreDiff),
-        match.type
-      );
-      await updatePairRating(
-        pairB,
-        pairA,
-        !wonA,
-        Math.abs(scoreDiff),
-        match.type
-      );
+      await updatePairRating(pairA, pairB, wonA, absScoreDiff, match.type);
+      await updatePairRating(pairB, pairA, !wonA, absScoreDiff, match.type);
     }
 
     // Insert pairs into database
@@ -164,4 +155,3 @@ async function initializePairs() {
 }
 
 initializePairs();
-
