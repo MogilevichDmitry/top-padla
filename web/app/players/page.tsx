@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { nameToSlug } from "@/lib/utils";
 
 interface PlayerWithStats {
   id: number;
@@ -55,6 +56,13 @@ export default function PlayersPage() {
     }
   };
 
+  // Calculate ranks based on rating (always by rating, regardless of current sort)
+  const playersByRating = [...players].sort((a, b) => b.rating - a.rating);
+  const rankMap = new Map<number, number>();
+  playersByRating.forEach((player, index) => {
+    rankMap.set(player.id, index + 1);
+  });
+
   const sortedPlayers = [...players].sort((a, b) => {
     let comparison = 0;
     if (sortBy === "rating") {
@@ -102,75 +110,23 @@ export default function PlayersPage() {
         </header>
 
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-4 md:px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Player Statistics
-              </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500 hidden md:inline">
-                  Sort by:
-                </span>
-                <button
-                  onClick={() => handleSort("rating")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    sortBy === "rating"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Rating
-                  {sortBy === "rating" && (
-                    <span className="ml-1">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort("matches")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    sortBy === "matches"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Matches
-                  {sortBy === "matches" && (
-                    <span className="ml-1">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort("winRate")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    sortBy === "winRate"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Win Rate
-                  {sortBy === "winRate" && (
-                    <span className="ml-1">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Mobile view - cards */}
-          <div className="md:hidden p-4 space-y-3">
+          <div className="md:hidden">
             {sortedPlayers.map((player) => (
               <div
                 key={player.id}
-                className="bg-white rounded-md border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+                className="bg-white p-4 border-b border-b-gray-200"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="font-semibold text-gray-900 text-lg">
-                    {player.name}
-                  </div>
+                  <Link
+                    href={`/players/${nameToSlug(player.name)}`}
+                    className="font-semibold text-gray-900 text-lg hover:text-blue-600 hover:underline"
+                  >
+                    {player.name}{" "}
+                    <span className="text-gray-400">
+                      (#{rankMap.get(player.id)})
+                    </span>
+                  </Link>
                   <span className="text-xl font-bold text-gray-900">
                     {Math.floor(player.rating)}
                   </span>
@@ -182,31 +138,15 @@ export default function PlayersPage() {
                       {player.matches}
                     </span>
                   </div>
-                  <div>
+                  <div className="text-right">
                     <span className="text-gray-500">W-L:</span>{" "}
                     <span className="font-medium text-gray-900">
                       {player.wins}-{player.losses}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-gray-500">Win Rate:</span>{" "}
-                    <span
-                      className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
-                        player.winRate >= 60
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : player.winRate >= 40
-                          ? "bg-amber-50 text-amber-700 border border-amber-200"
-                          : "bg-red-50 text-red-700 border border-red-200"
-                      }`}
-                    >
-                      {player.winRate.toFixed(1)}%
-                    </span>
-                  </div>
                 </div>
-                {(player.to6Wins + player.to6Losses > 0 ||
-                  player.to4Wins + player.to4Losses > 0 ||
-                  player.to3Wins + player.to3Losses > 0) && (
-                  <div className="flex items-center space-x-3 text-xs pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-between w-full text-sm mb-3">
+                  <div className="flex items-center space-x-3 text-xs">
                     {player.to6Wins + player.to6Losses > 0 && (
                       <span className="text-gray-600">
                         🎾 {player.to6Wins}-{player.to6Losses}
@@ -223,7 +163,21 @@ export default function PlayersPage() {
                       </span>
                     )}
                   </div>
-                )}
+                  <div className="text-right">
+                    <span className="text-gray-500">Win Rate:</span>{" "}
+                    <span
+                      className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
+                        player.winRate >= 60
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : player.winRate >= 40
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
+                    >
+                      {player.winRate.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -236,17 +190,83 @@ export default function PlayersPage() {
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Player
                   </th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => {
+                      if (sortBy === "rating") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        handleSort("rating");
+                      }
+                    }}
+                  >
                     Rating
+                    <span className="ml-1">
+                      {sortBy === "rating" ? (
+                        sortOrder === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-50">
+                          ↓
+                        </span>
+                      )}
+                    </span>
                   </th>
-                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th
+                    className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => {
+                      if (sortBy === "matches") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        handleSort("matches");
+                      }
+                    }}
+                  >
                     Matches
+                    <span className="ml-1">
+                      {sortBy === "matches" ? (
+                        sortOrder === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-50">
+                          ↓
+                        </span>
+                      )}
+                    </span>
                   </th>
                   <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     W-L
                   </th>
-                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th
+                    className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => {
+                      if (sortBy === "winRate") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        handleSort("winRate");
+                      }
+                    }}
+                  >
                     Win %
+                    <span className="ml-1">
+                      {sortBy === "winRate" ? (
+                        sortOrder === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-50">
+                          ↓
+                        </span>
+                      )}
+                    </span>
                   </th>
                   <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Match Types
@@ -260,11 +280,15 @@ export default function PlayersPage() {
                     className="hover:bg-gray-50/50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {player.name}
-                        </div>
-                      </div>
+                      <Link
+                        href={`/players/${nameToSlug(player.name)}`}
+                        className="text-sm font-semibold text-gray-900 hover:text-blue-600 hover:underline"
+                      >
+                        {player.name}{" "}
+                        <span className="text-gray-400">
+                          (#{rankMap.get(player.id)})
+                        </span>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-left">
                       <span className="text-base font-bold text-gray-900">

@@ -5,14 +5,17 @@ import { getPlayerStats } from "./rating";
 const START_RATING = 1000;
 const K_BASE = 28;
 
-interface Streaks {
+export interface Streaks {
   best_win: number;
   best_win_date: string | null;
   worst_loss: number;
   worst_loss_date: string | null;
+  current_streak: number;
+  current_streak_type: "win" | "loss" | null;
+  current_streak_start_date: string | null;
 }
 
-function getPlayerStreaks(playerId: number, matches: Match[]): Streaks {
+export function getPlayerStreaks(playerId: number, matches: Match[]): Streaks {
   let currentWinStreak = 0;
   let currentLossStreak = 0;
   let bestWinStreak = 0;
@@ -47,11 +50,64 @@ function getPlayerStreaks(playerId: number, matches: Match[]): Streaks {
     }
   }
 
+  // Determine current streak type and find start date
+  let currentStreakType: "win" | "loss" | null = null;
+  let currentStreakStartDate: string | null = null;
+
+  if (currentWinStreak > 0) {
+    currentStreakType = "win";
+    // Find the date when current win streak started
+    // Go backwards from the end to find the first win in the streak
+    const reversedMatches = [...sortedMatches].reverse();
+    let streakCount = 0;
+    for (const match of reversedMatches) {
+      const isTeamA = match.team_a.includes(playerId);
+      const won = isTeamA
+        ? match.score_a > match.score_b
+        : match.score_b > match.score_a;
+
+      if (won) {
+        streakCount++;
+        currentStreakStartDate = match.date;
+        if (streakCount === currentWinStreak) {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+  } else if (currentLossStreak > 0) {
+    currentStreakType = "loss";
+    // Find the date when current loss streak started
+    // Go backwards from the end to find the first loss in the streak
+    const reversedMatches = [...sortedMatches].reverse();
+    let streakCount = 0;
+    for (const match of reversedMatches) {
+      const isTeamA = match.team_a.includes(playerId);
+      const won = isTeamA
+        ? match.score_a > match.score_b
+        : match.score_b > match.score_a;
+
+      if (!won) {
+        streakCount++;
+        currentStreakStartDate = match.date;
+        if (streakCount === currentLossStreak) {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+
   return {
     best_win: bestWinStreak,
     best_win_date: bestWinDate,
     worst_loss: worstLossStreak,
     worst_loss_date: worstLossDate,
+    current_streak: currentWinStreak > 0 ? currentWinStreak : currentLossStreak,
+    current_streak_type: currentStreakType,
+    current_streak_start_date: currentStreakStartDate,
   };
 }
 

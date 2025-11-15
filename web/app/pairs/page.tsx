@@ -127,81 +127,20 @@ export default function PairsPage() {
         </header>
 
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-4 md:px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Pair Statistics
-              </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500 hidden md:inline">
-                  Sort by:
-                </span>
-                <button
-                  onClick={() => handleSort("rating")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    sortBy === "rating"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Rating
-                  {sortBy === "rating" && (
-                    <span className="ml-1">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort("matches")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    sortBy === "matches"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Matches
-                  {sortBy === "matches" && (
-                    <span className="ml-1">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort("winRate")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    sortBy === "winRate"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Win Rate
-                  {sortBy === "winRate" && (
-                    <span className="ml-1">
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Mobile view - cards */}
-          <div className="md:hidden p-4 space-y-3">
+          <div className="md:hidden">
             {sortedPairs.map((pair) => {
               const winRate =
                 pair.matches > 0 ? (pair.wins / pair.matches) * 100 : 0;
               return (
-                <div
-                  key={pair.id}
-                  className="bg-white rounded-md border border-gray-200 p-4 hover:border-gray-300 transition-colors"
-                >
+                <div key={pair.id} className="border-b border-gray-200 p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       <span className="text-lg">
                         {iconMap.get(pair.id) || "🤝"}
                       </span>
                       <div className="flex flex-col font-semibold text-gray-900 text-base leading-tight">
-                        <span>{pair.player1_name}</span>
+                        <span className="mb-0.5">{pair.player1_name}</span>
                         <span>{pair.player2_name}</span>
                       </div>
                     </div>
@@ -222,8 +161,8 @@ export default function PairsPage() {
                         {pair.wins}-{pair.losses}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-gray-500">Win Rate:</span>{" "}
+                    <div className="text-right">
+                      <span className="text-gray-500">WR:</span>{" "}
                       {pair.matches > 0 ? (
                         <span
                           className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
@@ -254,17 +193,83 @@ export default function PairsPage() {
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Pair
                   </th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => {
+                      if (sortBy === "rating") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        handleSort("rating");
+                      }
+                    }}
+                  >
                     Rating
+                    <span className="ml-1">
+                      {sortBy === "rating" ? (
+                        sortOrder === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-50">
+                          ↓
+                        </span>
+                      )}
+                    </span>
                   </th>
-                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th
+                    className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => {
+                      if (sortBy === "matches") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        handleSort("matches");
+                      }
+                    }}
+                  >
                     Matches
+                    <span className="ml-1">
+                      {sortBy === "matches" ? (
+                        sortOrder === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-50">
+                          ↓
+                        </span>
+                      )}
+                    </span>
                   </th>
                   <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     W-L
                   </th>
-                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th
+                    className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => {
+                      if (sortBy === "winRate") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        handleSort("winRate");
+                      }
+                    }}
+                  >
                     Win %
+                    <span className="ml-1">
+                      {sortBy === "winRate" ? (
+                        sortOrder === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-50">
+                          ↓
+                        </span>
+                      )}
+                    </span>
                   </th>
                 </tr>
               </thead>
@@ -278,12 +283,12 @@ export default function PairsPage() {
                       className="hover:bg-gray-50/50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3">
                           <span className="text-lg">
                             {iconMap.get(pair.id) || "🤝"}
                           </span>
                           <div className="flex flex-col text-sm font-semibold text-gray-900 leading-tight">
-                            <span>{pair.player1_name}</span>
+                            <span className="mb-0.5">{pair.player1_name}</span>
                             <span>{pair.player2_name}</span>
                           </div>
                         </div>

@@ -194,7 +194,7 @@ export default function MatchesPage() {
             return (
               <div
                 key={match.id}
-                className="bg-white rounded-md border border-gray-200 p-4 pt-2"
+                className="bg-white md:rounded-md border border-gray-200 border-b border-gray-300 p-4 pt-2"
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center space-x-2">

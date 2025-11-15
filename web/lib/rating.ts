@@ -231,3 +231,149 @@ export function getPlayerStats(
     partnerStats,
   };
 }
+
+export interface RatingHistoryPoint {
+  date: string;
+  rating: number;
+}
+
+export function getRatingHistory(
+  playerId: number,
+  players: Player[],
+  matches: Match[]
+): RatingHistoryPoint[] {
+  const history: RatingHistoryPoint[] = [];
+
+  // Start with initial rating
+  history.push({ date: "", rating: START_RATING });
+
+  // Sort matches chronologically
+  const sortedMatches = [...matches].sort((a, b) => {
+    const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+    return dateCompare !== 0 ? dateCompare : a.id - b.id;
+  });
+
+  // Simulate rating changes over time (using window approach)
+  const now = new Date();
+
+  for (const match of sortedMatches) {
+    const matchDate = new Date(match.date);
+
+    if (match.team_a.includes(playerId) || match.team_b.includes(playerId)) {
+      // Calculate rating at this point using window
+      const cutoff = new Date(matchDate);
+      cutoff.setDate(cutoff.getDate() - WINDOW_DAYS);
+
+      const ratings: RatingTable = {};
+      players.forEach((p) => {
+        ratings[p.id] = START_RATING;
+      });
+
+      // Process all matches before this one within window
+      for (const m of sortedMatches) {
+        const mDate = new Date(m.date);
+        if (mDate < cutoff || mDate > matchDate) {
+          continue;
+        }
+
+        if (m.team_a.length === 2 && m.team_b.length === 2) {
+          const [a1, a2] = m.team_a;
+          const [b1, b2] = m.team_b;
+
+          const rA = (ratings[a1] + ratings[a2]) / 2.0;
+          const rB = (ratings[b1] + ratings[b2]) / 2.0;
+
+          const E = expected(rA, rB);
+          const T = getTByType(m.type);
+          const S = actualS(m.score_a, m.score_b, T, m.type);
+          const deltaTeam = K_BASE * getLByType(m.type) * (S - E);
+
+          ratings[a1] = ratings[a1] + deltaTeam;
+          ratings[a2] = ratings[a2] + deltaTeam;
+          ratings[b1] = ratings[b1] - deltaTeam;
+          ratings[b2] = ratings[b2] - deltaTeam;
+        }
+      }
+
+      if (playerId in ratings) {
+        history.push({ date: match.date, rating: ratings[playerId] });
+      }
+    }
+  }
+
+  return history;
+}
+
+export interface PerformanceStats {
+  vsStrong: { total: number; wins: number; losses: number; winRate: number };
+  vsWeak: { total: number; wins: number; losses: number; winRate: number };
+  vsEqual: { total: number; wins: number; losses: number; winRate: number };
+  currentRating: number;
+}
+
+export function getPerformanceByOpponentStrength(
+  playerId: number,
+  players: Player[],
+  matches: Match[],
+  ratings: RatingTable
+): PerformanceStats {
+  const currentPlayerRating = ratings[playerId] || START_RATING;
+
+  // Categorize opponents
+  const strongOpponents: boolean[] = [];
+  const weakOpponents: boolean[] = [];
+  const equalOpponents: boolean[] = [];
+
+  for (const match of matches) {
+    let opponentTeam: number[] = [];
+    let myScore = 0;
+
+    if (match.team_a.includes(playerId)) {
+      opponentTeam = match.team_b;
+      myScore = match.score_a;
+    } else if (match.team_b.includes(playerId)) {
+      opponentTeam = match.team_a;
+      myScore = match.score_b;
+    } else {
+      continue;
+    }
+
+    // Calculate average opponent rating
+    const avgOppRating =
+      opponentTeam.reduce((sum, p) => sum + (ratings[p] || START_RATING), 0) /
+      opponentTeam.length;
+
+    const won =
+      myScore >
+      (match.team_a.includes(playerId) ? match.score_b : match.score_a);
+    const diff = avgOppRating - currentPlayerRating;
+
+    if (diff > 50) {
+      strongOpponents.push(won);
+    } else if (diff < -50) {
+      weakOpponents.push(won);
+    } else {
+      equalOpponents.push(won);
+    }
+  }
+
+  const calcStats = (matchResults: boolean[]) => {
+    if (matchResults.length === 0) {
+      return { total: 0, wins: 0, losses: 0, winRate: 0 };
+    }
+    const wins = matchResults.filter((w) => w).length;
+    return {
+      total: matchResults.length,
+      wins,
+      losses: matchResults.length - wins,
+      winRate: (wins / matchResults.length) * 100,
+    };
+  };
+
+  return {
+    vsStrong: calcStats(strongOpponents),
+    vsWeak: calcStats(weakOpponents),
+    vsEqual: calcStats(equalOpponents),
+    currentRating: currentPlayerRating,
+  };
+}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { nameToSlug } from "@/lib/utils";
 
 interface PlayerWithRating {
   id: number;
@@ -59,31 +61,27 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-4 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
-            Player Standings
-          </h1>
-          <p className="text-sm md:text-base text-gray-600">
-            Current rankings based on modified Elo rating system
-          </p>
-        </header>
-
         <div className="bg-white rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-900 to-orange-800 px-6 py-4">
-            <h2 className="text-white text-2xl font-semibold">Standings</h2>
+          <div className="bg-gradient-to-r from-blue-900 to-orange-800 p-6">
+            <h2 className="text-white text-2xl font-semibold">
+              Player Standings
+            </h2>
+            <h5 className="text-gray-300 text-sm font-semibold mt-1">
+              Current rankings based on modified Elo rating system
+            </h5>
           </div>
 
           {/* Mobile view - cards */}
-          <div className="md:hidden space-y-3">
+          <div className="md:hidden">
             {standings.map((player, index) => (
               <div
                 key={player.id}
-                className="bg-white rounded-md p-4 border-l-4 border-blue-500"
+                className="bg-white p-4 border-b border-b-gray-200"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-3">
                     <span
-                      className={`text-sm ${
+                      className={`text-lg ${
                         index < 3
                           ? "font-bold text-gray-900"
                           : "font-medium text-gray-600"
@@ -91,9 +89,12 @@ export default function Home() {
                     >
                       {index + 1}
                     </span>
-                    <div className="text-base font-semibold text-gray-900">
+                    <Link
+                      href={`/players/${nameToSlug(player.name)}`}
+                      className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline"
+                    >
                       {player.name}
-                    </div>
+                    </Link>
                   </div>
                   <span className="text-lg font-bold text-gray-900">
                     {Math.floor(player.rating)}
@@ -153,7 +154,7 @@ export default function Home() {
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-left max-w-[50px]">
                       <span
-                        className={`text-sm ${
+                        className={`text-lg ${
                           index < 3
                             ? "font-bold text-gray-900"
                             : "font-medium text-gray-600"
@@ -163,9 +164,12 @@ export default function Home() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-base font-medium text-gray-900">
+                      <Link
+                        href={`/players/${nameToSlug(player.name)}`}
+                        className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline"
+                      >
                         {player.name}
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-left">
                       <span className="text-lg font-semibold text-gray-900">
