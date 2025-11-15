@@ -107,21 +107,21 @@ export default function RecordsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <header className="mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
             League Records
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             Historical achievements and statistics
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {/* Ratings */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               📈 Ratings
             </h2>
             <div className="space-y-3">
@@ -169,8 +169,8 @@ export default function RecordsPage() {
           </div>
 
           {/* Win Rates */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               🎯 Win Rates (min 5 matches)
             </h2>
             <div className="space-y-3">
@@ -208,8 +208,8 @@ export default function RecordsPage() {
           </div>
 
           {/* Streaks */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               🔥 Streaks
             </h2>
             <div className="space-y-3">
@@ -263,8 +263,8 @@ export default function RecordsPage() {
           </div>
 
           {/* Duos */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               👥 Best/Worst Duos
             </h2>
             <div className="space-y-3">

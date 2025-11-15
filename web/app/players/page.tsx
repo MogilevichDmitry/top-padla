@@ -90,26 +90,26 @@ export default function PlayersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Players</h1>
-          <p className="text-gray-600">
+        <header className="mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">Players</h1>
+          <p className="text-sm md:text-base text-gray-600">
             All registered players with their statistics
           </p>
         </header>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-white text-2xl font-semibold">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 md:px-6 py-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+              <h2 className="text-white text-xl md:text-2xl font-semibold">
                 Player Statistics
               </h2>
-              <div className="flex items-center space-x-4 text-sm text-white/90">
-                <span>Sort by:</span>
+              <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white/90">
+                <span className="hidden md:inline">Sort by:</span>
                 <button
                   onClick={() => handleSort("rating")}
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm ${
                     sortBy === "rating"
                       ? "bg-white/20 font-semibold"
                       : "hover:bg-white/10"
@@ -122,7 +122,7 @@ export default function PlayersPage() {
                 </button>
                 <button
                   onClick={() => handleSort("matches")}
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm ${
                     sortBy === "matches"
                       ? "bg-white/20 font-semibold"
                       : "hover:bg-white/10"
@@ -135,7 +135,7 @@ export default function PlayersPage() {
                 </button>
                 <button
                   onClick={() => handleSort("winRate")}
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm ${
                     sortBy === "winRate"
                       ? "bg-white/20 font-semibold"
                       : "hover:bg-white/10"

@@ -2,19 +2,19 @@
 
 export default function HelpPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <header className="mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
             Help & Guide
           </h1>
-          <p className="text-gray-600">Learn how the rating system works</p>
+          <p className="text-sm md:text-base text-gray-600">Learn how the rating system works</p>
         </header>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Rating System */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               📊 Rating System
             </h2>
             <div className="space-y-4 text-gray-700">

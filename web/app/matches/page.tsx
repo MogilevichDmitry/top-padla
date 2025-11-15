@@ -173,13 +173,13 @@ export default function MatchesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <header className="mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
             Match History
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             All matches sorted by date (newest first)
           </p>
         </header>
@@ -190,48 +190,48 @@ export default function MatchesPage() {
             return (
               <div
                 key={match.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow px-4 py-2"
+                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-3 md:px-4 md:py-2"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">
+                <div className="flex items-center justify-between mb-2 md:mb-1">
+                  <div className="flex items-center space-x-2 md:space-x-3">
+                    <span className="text-xl md:text-2xl">
                       {getMatchTypeEmoji(match.type)}
                     </span>
-                    <span className="text-sm font-semibold text-gray-500 uppercase">
+                    <span className="text-xs md:text-sm font-semibold text-gray-500 uppercase">
                       {match.type}
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-xs md:text-sm text-gray-500">
                     {formatDate(match.date)}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
                   <div
-                    className={`flex-1 text-right pr-4 ${
+                    className={`flex-1 text-center md:text-right md:pr-4 ${
                       teamAWon ? "font-semibold text-gray-900" : "text-gray-600"
                     }`}
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-0.5 md:space-y-1">
                       {match.team_a_names.map((name, idx) => (
-                        <div key={idx} className="text-lg">
+                        <div key={idx} className="text-sm md:text-lg">
                           {name}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="shrink-0 px-6">
+                  <div className="flex items-center justify-center space-x-2 md:space-x-0 md:shrink-0 md:px-6">
                     <div
-                      className={`text-2xl font-bold ${
+                      className={`text-xl md:text-2xl font-bold ${
                         teamAWon ? "text-blue-600" : "text-gray-400"
                       }`}
                     >
                       {match.score_a}
                     </div>
-                    <div className="text-center text-gray-400 text-sm">—</div>
+                    <div className="text-center text-gray-400 text-sm md:text-base">—</div>
                     <div
-                      className={`text-2xl font-bold ${
+                      className={`text-xl md:text-2xl font-bold ${
                         !teamAWon ? "text-blue-600" : "text-gray-400"
                       }`}
                     >
@@ -240,15 +240,15 @@ export default function MatchesPage() {
                   </div>
 
                   <div
-                    className={`flex-1 text-left pl-4 ${
+                    className={`flex-1 text-center md:text-left md:pl-4 ${
                       !teamAWon
                         ? "font-semibold text-gray-900"
                         : "text-gray-600"
                     }`}
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-0.5 md:space-y-1">
                       {match.team_b_names.map((name, idx) => (
-                        <div key={idx} className="text-lg">
+                        <div key={idx} className="text-sm md:text-lg">
                           {name}
                         </div>
                       ))}

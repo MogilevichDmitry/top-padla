@@ -57,13 +57,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <header className="mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
             Player Standings
           </h1>
-          <p className="text-gray-600">Current rankings based on modified Elo rating system</p>
+          <p className="text-sm md:text-base text-gray-600">Current rankings based on modified Elo rating system</p>
         </header>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -71,7 +71,55 @@ export default function Home() {
             <h2 className="text-white text-2xl font-semibold">Standings</h2>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile view - cards */}
+          <div className="md:hidden space-y-3">
+            {standings.map((player, index) => (
+              <div
+                key={player.id}
+                className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-3">
+                    <span
+                      className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
+                        index === 0
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : index === 1
+                          ? 'bg-gray-100 text-gray-800'
+                          : index === 2
+                          ? 'bg-orange-100 text-orange-800'
+                          : 'bg-gray-50 text-gray-600'
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="font-semibold text-gray-900">{player.name}</div>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">
+                    {Math.round(player.rating)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>{player.matches} matches</span>
+                  <span>{player.wins}-{player.losses}</span>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      player.winRate >= 60
+                        ? 'bg-green-100 text-green-800'
+                        : player.winRate >= 40
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {player.winRate.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop view - table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
