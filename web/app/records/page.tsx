@@ -9,8 +9,6 @@ interface LeagueRecords {
   lowest_rating?: number;
   lowest_player?: number;
   lowest_date?: string;
-  most_matches?: number;
-  most_matches_player?: number;
   best_wr?: number;
   best_wr_player?: number;
   worst_wr?: number;
@@ -21,16 +19,6 @@ interface LeagueRecords {
   longest_loss_streak?: number;
   longest_loss_player?: number;
   longest_loss_date?: string;
-  biggest_win?: {
-    id: number;
-    team_a: number[];
-    team_b: number[];
-    score_a: number;
-    score_b: number;
-    date: string;
-    type: string;
-  };
-  biggest_diff?: number;
   best_duo_player?: number;
   best_duo_partner?: string;
   best_duo_wr?: number;
@@ -95,18 +83,6 @@ export default function RecordsPage() {
     });
   };
 
-  const getMatchTypeEmoji = (type: string) => {
-    switch (type) {
-      case "to6":
-        return "🎾";
-      case "to4":
-        return "🏸";
-      case "to3":
-        return "🎯";
-      default:
-        return "🎾";
-    }
-  };
 
   if (loading) {
     return (
@@ -190,29 +166,6 @@ export default function RecordsPage() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Activity */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              ⚡ Activity
-            </h2>
-            {records.most_matches_player && (
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div>
-                  <div className="text-sm text-gray-600">Most Matches</div>
-                  <div className="font-semibold text-gray-900">
-                    {getPlayerName(records.most_matches_player)}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {records.most_matches}
-                  </div>
-                  <div className="text-xs text-gray-500">matches</div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Win Rates */}
@@ -360,40 +313,6 @@ export default function RecordsPage() {
             </div>
           </div>
 
-          {/* Biggest Score */}
-          {records.biggest_win && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                ⚽ Biggest Score
-              </h2>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-2">
-                  {formatDate(records.biggest_win.date)} •{" "}
-                  {getMatchTypeEmoji(records.biggest_win.type)}{" "}
-                  {records.biggest_win.type}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-gray-700">
-                    {records.biggest_win.team_a
-                      .map((id) => getPlayerName(id))
-                      .join(" + ")}
-                  </div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {records.biggest_win.score_a} -{" "}
-                    {records.biggest_win.score_b}
-                  </div>
-                  <div className="text-gray-700">
-                    {records.biggest_win.team_b
-                      .map((id) => getPlayerName(id))
-                      .join(" + ")}
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2 text-center">
-                  Score difference: {records.biggest_diff}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
