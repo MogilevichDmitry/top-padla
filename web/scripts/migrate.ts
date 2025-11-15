@@ -97,8 +97,8 @@ async function migrate() {
           ${match.id},
           ${match.date}::timestamp,
           ${match.type},
-          ${match.team_a},
-          ${match.team_b},
+          ARRAY[${match.team_a.join(',')}]::integer[],
+          ARRAY[${match.team_b.join(',')}]::integer[],
           ${match.score_a},
           ${match.score_b},
           ${match.created_by}
@@ -106,8 +106,8 @@ async function migrate() {
         ON CONFLICT (id) DO UPDATE SET
           date = ${match.date}::timestamp,
           type = ${match.type},
-          team_a = ${match.team_a},
-          team_b = ${match.team_b},
+          team_a = ARRAY[${match.team_a.join(',')}]::integer[],
+          team_b = ARRAY[${match.team_b.join(',')}]::integer[],
           score_a = ${match.score_a},
           score_b = ${match.score_b},
           created_by = ${match.created_by}

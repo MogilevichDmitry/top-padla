@@ -229,7 +229,9 @@ export default function MatchesPage() {
                     >
                       {match.score_a}
                     </div>
-                    <div className="text-center text-gray-400 text-sm md:text-base">—</div>
+                    <div className="text-center text-gray-400 text-sm md:text-base">
+                      —
+                    </div>
                     <div
                       className={`text-xl md:text-2xl font-bold ${
                         !teamAWon ? "text-blue-600" : "text-gray-400"
@@ -270,7 +272,7 @@ export default function MatchesPage() {
           )}
           {!pagination?.hasMore && matches.length > 0 && (
             <p className="text-center text-gray-500 text-sm">
-              No more matches to load
+              You reached the end of the match history.
             </p>
           )}
         </div>
