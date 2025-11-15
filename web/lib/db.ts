@@ -57,8 +57,8 @@ export async function createMatch(match: Omit<Match, "id">): Promise<Match> {
     VALUES (
       ${match.date},
       ${match.type},
-      ${match.team_a},
-      ${match.team_b},
+      ARRAY[${sql.join(match.team_a.map(id => sql`${id}`), sql`, `)}]::integer[],
+      ARRAY[${sql.join(match.team_b.map(id => sql`${id}`), sql`, `)}]::integer[],
       ${match.score_a},
       ${match.score_b},
       ${match.created_by}
