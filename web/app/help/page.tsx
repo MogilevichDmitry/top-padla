@@ -138,7 +138,7 @@ export default function HelpPage() {
                   <li>Lose 0-6: S = 0.2 (minimum)</li>
                 </ul>
                 <p className="text-xs text-gray-500 mt-2">
-                  Score influence is reduced by 40% (margin factor = 0.3)
+                  Score influence is reduced by 40% (margin factor = 0.3) for all match types
                 </p>
               </div>
 
