@@ -144,7 +144,63 @@ export default function PairsPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile view - cards */}
+          <div className="md:hidden space-y-3 p-4">
+            {sortedPairs.map((pair) => {
+              const winRate = pair.matches > 0 ? (pair.wins / pair.matches) * 100 : 0;
+              return (
+                <div
+                  key={pair.id}
+                  className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">🤝</span>
+                      <div className="font-semibold text-gray-900 text-base">
+                        {pair.player1_name} + {pair.player2_name}
+                      </div>
+                    </div>
+                    <span className="text-xl font-bold text-gray-900">
+                      {Math.round(pair.rating)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Matches:</span>{" "}
+                      <span className="font-medium text-gray-900">{pair.matches}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">W-L:</span>{" "}
+                      <span className="font-medium text-gray-900">
+                        {pair.wins}-{pair.losses}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Win Rate:</span>{" "}
+                      {pair.matches > 0 ? (
+                        <span
+                          className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            winRate >= 60
+                              ? "bg-green-100 text-green-800"
+                              : winRate >= 40
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {winRate.toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop view - table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>

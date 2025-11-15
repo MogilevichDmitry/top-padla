@@ -150,7 +150,80 @@ export default function PlayersPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile view - cards */}
+          <div className="md:hidden space-y-3 p-4">
+            {sortedPlayers.map((player) => (
+              <div
+                key={player.id}
+                className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-semibold text-gray-900 text-lg">
+                    {player.name}
+                  </div>
+                  <span className="text-xl font-bold text-gray-900">
+                    {Math.round(player.rating)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                  <div>
+                    <span className="text-gray-500">Matches:</span>{" "}
+                    <span className="font-medium text-gray-900">{player.matches}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">W-L:</span>{" "}
+                    <span className="font-medium text-gray-900">
+                      {player.wins}-{player.losses}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Win Rate:</span>{" "}
+                    <span
+                      className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                        player.winRate >= 60
+                          ? "bg-green-100 text-green-800"
+                          : player.winRate >= 40
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {player.winRate.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Avg Score:</span>{" "}
+                    <span className="font-medium text-gray-900">
+                      {player.avgScoreFor.toFixed(1)} - {player.avgScoreAgainst.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+                {(player.to6Wins + player.to6Losses > 0 ||
+                  player.to4Wins + player.to4Losses > 0 ||
+                  player.to3Wins + player.to3Losses > 0) && (
+                  <div className="flex items-center space-x-3 text-xs pt-2 border-t border-gray-200">
+                    {player.to6Wins + player.to6Losses > 0 && (
+                      <span className="text-gray-600">
+                        🎾 {player.to6Wins}-{player.to6Losses}
+                      </span>
+                    )}
+                    {player.to4Wins + player.to4Losses > 0 && (
+                      <span className="text-gray-600">
+                        🏸 {player.to4Wins}-{player.to4Losses}
+                      </span>
+                    )}
+                    {player.to3Wins + player.to3Losses > 0 && (
+                      <span className="text-gray-600">
+                        🎯 {player.to3Wins}-{player.to3Losses}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop view - table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
