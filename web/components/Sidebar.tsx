@@ -9,6 +9,7 @@ const menuItems = [
   { href: "/players", label: "👥 Players", icon: "👥" },
   { href: "/pairs", label: "🤝 Pairs", icon: "🤝" },
   { href: "/records", label: "📊 Records", icon: "📊" },
+  { href: "/help", label: "❓ Help", icon: "❓" },
 ];
 
 export default function Sidebar() {
