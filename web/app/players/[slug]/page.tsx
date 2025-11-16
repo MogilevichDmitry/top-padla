@@ -16,10 +16,12 @@ export default function PlayerPage() {
     "rating"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [opponentSortBy, setOpponentSortBy] = useState<"rating" | "games" | "winRate">(
-    "rating"
+  const [opponentSortBy, setOpponentSortBy] = useState<
+    "rating" | "games" | "winRate"
+  >("rating");
+  const [opponentSortOrder, setOpponentSortOrder] = useState<"asc" | "desc">(
+    "desc"
   );
-  const [opponentSortOrder, setOpponentSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const matchesPerPage = 10;
 
@@ -446,7 +448,11 @@ export default function PlayerPage() {
                       </div>
                       <div className="col-span-2 text-right">
                         <span className="text-gray-500">WR:</span>{" "}
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(partner.winRate)}`}>
+                        <span
+                          className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(
+                            partner.winRate
+                          )}`}
+                        >
                           {partner.winRate.toFixed(1)}%
                         </span>
                       </div>
@@ -584,7 +590,11 @@ export default function PlayerPage() {
                           {partner.wins}-{partner.losses}
                         </td>
                         <td className="py-2 px-4 text-center">
-                          <span className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(partner.winRate)}`}>
+                          <span
+                            className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(
+                              partner.winRate
+                            )}`}
+                          >
                             {partner.winRate.toFixed(1)}%
                           </span>
                         </td>
@@ -652,7 +662,11 @@ export default function PlayerPage() {
                       </div>
                       <div className="col-span-2 text-right">
                         <span className="text-gray-500">WR:</span>{" "}
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(opponent.winRate)}`}>
+                        <span
+                          className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(
+                            opponent.winRate
+                          )}`}
+                        >
                           {opponent.winRate.toFixed(1)}%
                         </span>
                       </div>
@@ -673,7 +687,9 @@ export default function PlayerPage() {
                       className="text-left py-2 px-4 text-gray-700 cursor-pointer hover:bg-gray-100 group"
                       onClick={() => {
                         if (opponentSortBy === "rating") {
-                          setOpponentSortOrder(opponentSortOrder === "asc" ? "desc" : "asc");
+                          setOpponentSortOrder(
+                            opponentSortOrder === "asc" ? "desc" : "asc"
+                          );
                         } else {
                           setOpponentSortBy("rating");
                           setOpponentSortOrder("desc");
@@ -699,7 +715,9 @@ export default function PlayerPage() {
                       className="text-center py-2 px-4 text-gray-700 cursor-pointer hover:bg-gray-100 group"
                       onClick={() => {
                         if (opponentSortBy === "games") {
-                          setOpponentSortOrder(opponentSortOrder === "asc" ? "desc" : "asc");
+                          setOpponentSortOrder(
+                            opponentSortOrder === "asc" ? "desc" : "asc"
+                          );
                         } else {
                           setOpponentSortBy("games");
                           setOpponentSortOrder("desc");
@@ -726,7 +744,9 @@ export default function PlayerPage() {
                       className="text-center py-2 px-4 text-gray-700 cursor-pointer hover:bg-gray-100 group"
                       onClick={() => {
                         if (opponentSortBy === "winRate") {
-                          setOpponentSortOrder(opponentSortOrder === "asc" ? "desc" : "asc");
+                          setOpponentSortOrder(
+                            opponentSortOrder === "asc" ? "desc" : "asc"
+                          );
                         } else {
                           setOpponentSortBy("winRate");
                           setOpponentSortOrder("desc");
@@ -761,7 +781,9 @@ export default function PlayerPage() {
                       } else if (opponentSortBy === "winRate") {
                         comparison = a.winRate - b.winRate;
                       }
-                      return opponentSortOrder === "asc" ? comparison : -comparison;
+                      return opponentSortOrder === "asc"
+                        ? comparison
+                        : -comparison;
                     })
                     .map((opponent) => (
                       <tr
@@ -790,7 +812,11 @@ export default function PlayerPage() {
                           {opponent.wins}-{opponent.losses}
                         </td>
                         <td className="py-2 px-4 text-center">
-                          <span className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(opponent.winRate)}`}>
+                          <span
+                            className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(
+                              opponent.winRate
+                            )}`}
+                          >
                             {opponent.winRate.toFixed(1)}%
                           </span>
                         </td>
@@ -857,13 +883,24 @@ export default function PlayerPage() {
                       return (
                         <div
                           key={match.id}
-                          className={`pb-3 ${
+                          className={`flex items-stretch pb-3 ${
                             isLastMatch && totalPages > 1
                               ? ""
                               : "border-b border-gray-200"
                           }`}
                         >
-                          <div className="flex items-start justify-between">
+                          <div
+                            className={`flex items-center justify-center min-w-8 mr-4 ${
+                              won
+                                ? "bg-green-50 text-green-800"
+                                : "bg-red-50 text-red-800"
+                            }`}
+                          >
+                            <span className="text-xl font-bold">
+                              {won ? "W" : "L"}
+                            </span>
+                          </div>
+                          <div className="flex-1 flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-1">
                                 <span>{getMatchTypeIcon(match.type)}</span>

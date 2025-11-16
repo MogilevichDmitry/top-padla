@@ -29,6 +29,7 @@ export default function MatchesPage() {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [confirmText, setConfirmText] = useState<string>("");
+  const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
   const {
     data,
     fetchNextPage,
@@ -63,6 +64,53 @@ export default function MatchesPage() {
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     return matchDate >= twoWeeksAgo;
+  }
+
+  // Check if two teams have the same players (order doesn't matter)
+  function teamsMatch(team1: number[], team2: number[]): boolean {
+    if (team1.length !== team2.length) return false;
+    const sorted1 = [...team1].sort((a, b) => a - b);
+    const sorted2 = [...team2].sort((a, b) => a - b);
+    return sorted1.every((id, idx) => id === sorted2[idx]);
+  }
+
+  // Find matches with the same team composition (only previous matches)
+  function findSameCompositionMatches(currentMatch: Match): Match[] {
+    const sameMatches: Match[] = [];
+
+    for (const match of allMatches) {
+      // Skip the current match itself
+      if (match.id === currentMatch.id) continue;
+
+      // Only include matches that happened before this one
+      const currentDate = new Date(currentMatch.date).getTime();
+      const matchDate = new Date(match.date).getTime();
+      if (matchDate >= currentDate) continue;
+
+      // Check if teams match (either same order or swapped)
+      const teamsMatchSameOrder =
+        teamsMatch(match.team_a, currentMatch.team_a) &&
+        teamsMatch(match.team_b, currentMatch.team_b);
+
+      const teamsMatchSwapped =
+        teamsMatch(match.team_a, currentMatch.team_b) &&
+        teamsMatch(match.team_b, currentMatch.team_a);
+
+      if (teamsMatchSameOrder || teamsMatchSwapped) {
+        sameMatches.push(match);
+      }
+    }
+
+    // Sort by date (newest first)
+    return sameMatches.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA;
+    });
+  }
+
+  function toggleMatchExpansion(matchId: number) {
+    setExpandedMatchId(expandedMatchId === matchId ? null : matchId);
   }
 
   async function handleDeleteMatch(id: number) {
@@ -212,10 +260,56 @@ export default function MatchesPage() {
             const totalMatches =
               data?.pages[0]?.pagination?.total || matchesWithNames.length;
             const matchNumber = totalMatches - index;
+            const isExpanded = expandedMatchId === match.id;
+            const sameCompositionMatches = findSameCompositionMatches(match);
+            const hasHistory = sameCompositionMatches.length > 0;
+
+            // Calculate overall score summary including current match
+            let teamAWins = 0;
+            let teamBWins = 0;
+
+            if (hasHistory) {
+              // Add current match to the count
+              if (teamAWon) {
+                teamAWins++;
+              } else {
+                teamBWins++;
+              }
+
+              // Add previous matches
+              for (const prevMatch of sameCompositionMatches) {
+                // Check if teams are in the same order or swapped
+                const sameOrder =
+                  teamsMatch(prevMatch.team_a, match.team_a) &&
+                  teamsMatch(prevMatch.team_b, match.team_b);
+
+                if (sameOrder) {
+                  // Teams are in the same order
+                  if (prevMatch.score_a > prevMatch.score_b) {
+                    teamAWins++;
+                  } else {
+                    teamBWins++;
+                  }
+                } else {
+                  // Teams are swapped
+                  if (prevMatch.score_a > prevMatch.score_b) {
+                    teamBWins++; // prevMatch.team_a won, which is current match.team_b
+                  } else {
+                    teamAWins++; // prevMatch.team_b won, which is current match.team_a
+                  }
+                }
+              }
+            }
+
             return (
               <div
                 key={match.id}
-                className="bg-white md:rounded-lg border border-gray-200 hover:border-gray-300 transition-colors overflow-hidden"
+                onClick={() => hasHistory && toggleMatchExpansion(match.id)}
+                className={`bg-white md:rounded-lg border transition-colors overflow-hidden ${
+                  isExpanded
+                    ? "border-blue-300 shadow-md"
+                    : "border-gray-200 hover:border-gray-300"
+                } ${hasHistory ? "cursor-pointer" : ""}`}
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100">
@@ -226,6 +320,44 @@ export default function MatchesPage() {
                     <span className="text-base">
                       {getMatchTypeEmoji(match.type)}
                     </span>
+                    {hasHistory && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMatchExpansion(match.id);
+                        }}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        aria-label={
+                          isExpanded
+                            ? "Collapse match history"
+                            : "Expand match history"
+                        }
+                        title={
+                          isExpanded
+                            ? "Hide previous matches"
+                            : "Show previous matches"
+                        }
+                      >
+                        ({sameCompositionMatches.length} previous)
+                        <svg
+                          className={`h-4 w-4 transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 font-medium">
@@ -234,7 +366,10 @@ export default function MatchesPage() {
                     {isAdmin && canDeleteMatch(match, index) && (
                       <button
                         type="button"
-                        onClick={() => openConfirm(match.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openConfirm(match.id);
+                        }}
                         disabled={deletingIds.has(match.id)}
                         className={`p-1.5 rounded-md transition-colors ${
                           deletingIds.has(match.id)
@@ -314,6 +449,7 @@ export default function MatchesPage() {
                               <Link
                                 href={`/players/${nameToSlug(name)}`}
                                 className="hover:text-blue-600 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {name}
                               </Link>
@@ -340,21 +476,25 @@ export default function MatchesPage() {
                     </div>
 
                     {/* Score */}
-                    <div className="flex items-center justify-center space-x-4 md:shrink-0 md:px-6">
-                      <div
-                        className={`text-3xl md:text-4xl font-bold ${
-                          teamAWon ? "text-gray-900" : "text-gray-300"
-                        }`}
-                      >
-                        {match.score_a}
-                      </div>
-                      <div className="text-gray-300 text-xl font-light">—</div>
-                      <div
-                        className={`text-3xl md:text-4xl font-bold ${
-                          !teamAWon ? "text-gray-900" : "text-gray-300"
-                        }`}
-                      >
-                        {match.score_b}
+                    <div className="flex items-center justify-center md:shrink-0 md:px-6">
+                      <div className="flex items-center gap-2 md:gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                        <div
+                          className={`text-3xl md:text-4xl font-bold min-w-[32px] text-center ${
+                            teamAWon ? "text-green-600" : "text-gray-400"
+                          }`}
+                        >
+                          {match.score_a}
+                        </div>
+                        <div className="text-gray-400 text-xl font-medium">
+                          —
+                        </div>
+                        <div
+                          className={`text-3xl md:text-4xl font-bold min-w-[32px] text-center ${
+                            !teamAWon ? "text-green-600" : "text-gray-400"
+                          }`}
+                        >
+                          {match.score_b}
+                        </div>
                       </div>
                     </div>
 
@@ -383,6 +523,7 @@ export default function MatchesPage() {
                               <Link
                                 href={`/players/${nameToSlug(name)}`}
                                 className="hover:text-blue-600 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {name}
                               </Link>
@@ -409,6 +550,213 @@ export default function MatchesPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Previous Matches with Same Composition */}
+                {isExpanded && hasHistory && (
+                  <div className="border-t-2 border-blue-100 bg-linear-to-b from-blue-50 to-gray-50">
+                    <div className="px-4 py-4">
+                      {/* Overall Score Summary */}
+                      <div className="mb-4 p-3 bg-gray-100 rounded-lg">
+                        <div className="flex items-center justify-center gap-3 md:gap-4">
+                          <div className="text-center flex-1">
+                            <div className="text-xs md:text-sm font-medium text-gray-900 mb-1">
+                              {match.team_a_names.join(" + ")}
+                            </div>
+                            <div
+                              className={`text-2xl md:text-3xl font-bold ${
+                                teamAWins > teamBWins
+                                  ? "text-green-600"
+                                  : teamAWins < teamBWins
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {teamAWins}
+                            </div>
+                          </div>
+
+                          <div className="text-center px-2">
+                            <div className="text-base text-gray-600 mb-1">
+                              Total Score
+                            </div>
+                            <div className="text-xl md:text-2xl font-light text-gray-400">
+                              —
+                            </div>
+                          </div>
+
+                          <div className="text-center flex-1">
+                            <div className="text-xs md:text-sm font-medium text-gray-900 mb-1">
+                              {match.team_b_names.join(" + ")}
+                            </div>
+                            <div
+                              className={`text-2xl md:text-3xl font-bold ${
+                                teamBWins > teamAWins
+                                  ? "text-green-600"
+                                  : teamBWins < teamAWins
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {teamBWins}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                        Previous Matches ({sameCompositionMatches.length})
+                      </div>
+
+                      <div className="space-y-2">
+                        {sameCompositionMatches.map((prevMatch) => {
+                          const prevMatchWithNames = {
+                            ...prevMatch,
+                            team_a_names: prevMatch.team_a.map(
+                              (id) =>
+                                players.find((p) => p.id === id)?.name ||
+                                `Player ${id}`
+                            ),
+                            team_b_names: prevMatch.team_b.map(
+                              (id) =>
+                                players.find((p) => p.id === id)?.name ||
+                                `Player ${id}`
+                            ),
+                          };
+                          const prevTeamAWon =
+                            prevMatch.score_a > prevMatch.score_b;
+
+                          return (
+                            <div
+                              key={prevMatch.id}
+                              className="bg-white rounded-md border border-gray-300 p-2.5 hover:border-blue-300 transition-colors"
+                            >
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-base">
+                                    {getMatchTypeEmoji(prevMatch.type)}
+                                  </span>
+                                  <span className="text-xs text-gray-500 font-medium">
+                                    {formatDate(prevMatch.date)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between gap-3 md:gap-4">
+                                {/* Team A */}
+                                <div
+                                  className={`flex-1 text-right text-sm ${
+                                    prevTeamAWon
+                                      ? "font-semibold text-gray-900"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  <div className="space-y-0.5">
+                                    {prevMatchWithNames.team_a_names.map(
+                                      (name, idx) => {
+                                        const playerId = prevMatch.team_a[idx];
+                                        const rank =
+                                          playerRankMap.get(playerId);
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="flex items-center justify-end gap-1"
+                                          >
+                                            <Link
+                                              href={`/players/${nameToSlug(
+                                                name
+                                              )}`}
+                                              className="hover:text-blue-600 transition-colors"
+                                              onClick={(e) =>
+                                                e.stopPropagation()
+                                              }
+                                            >
+                                              {name}
+                                            </Link>
+                                            {rank && (
+                                              <span className="text-xs text-gray-500 font-normal">
+                                                #{rank}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Score */}
+                                <div className="flex items-center gap-1.5 shrink-0 px-2 py-1 bg-gray-50 rounded-md">
+                                  <div
+                                    className={`text-lg md:text-xl font-bold min-w-[20px] text-center ${
+                                      prevTeamAWon
+                                        ? "text-green-600"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {prevMatch.score_a}
+                                  </div>
+                                  <div className="text-gray-400 text-sm font-medium">
+                                    —
+                                  </div>
+                                  <div
+                                    className={`text-lg md:text-xl font-bold min-w-[20px] text-center ${
+                                      !prevTeamAWon
+                                        ? "text-green-600"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {prevMatch.score_b}
+                                  </div>
+                                </div>
+
+                                {/* Team B */}
+                                <div
+                                  className={`flex-1 text-left text-sm ${
+                                    !prevTeamAWon
+                                      ? "font-semibold text-gray-900"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  <div className="space-y-0.5">
+                                    {prevMatchWithNames.team_b_names.map(
+                                      (name, idx) => {
+                                        const playerId = prevMatch.team_b[idx];
+                                        const rank =
+                                          playerRankMap.get(playerId);
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="flex items-center justify-start gap-1"
+                                          >
+                                            <Link
+                                              href={`/players/${nameToSlug(
+                                                name
+                                              )}`}
+                                              className="hover:text-blue-600 transition-colors"
+                                              onClick={(e) =>
+                                                e.stopPropagation()
+                                              }
+                                            >
+                                              {name}
+                                            </Link>
+                                            {rank && (
+                                              <span className="text-xs text-gray-500 font-normal">
+                                                #{rank}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

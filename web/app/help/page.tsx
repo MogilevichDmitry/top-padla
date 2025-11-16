@@ -90,8 +90,10 @@ export default function HelpPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900">To 4 Points</h3>
                   <p className="text-sm">
-                    80% rating effect. Valid scores: 4-0, 4-1, 4-2, <strong>4-3</strong> (tiebreak may be skipped), 5-4 (tiebreak).
-                    If you skip the tiebreak, 4-3 is considered a valid final score.
+                    80% rating effect. Valid scores: 4-0, 4-1, 4-2,{" "}
+                    <strong>4-3</strong> (tiebreak may be skipped), 5-4
+                    (tiebreak). If you skip the tiebreak, 4-3 is considered a
+                    valid final score.
                   </p>
                 </div>
               </div>
@@ -100,8 +102,10 @@ export default function HelpPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900">To 3 Points</h3>
                   <p className="text-sm">
-                    70% rating effect. Valid scores: 3-0, 3-1, <strong>3-2</strong> (tiebreak may be skipped), 4-3 (tiebreak).
-                    If you skip the tiebreak, 3-2 is considered a valid final score.
+                    70% rating effect. Valid scores: 3-0, 3-1,{" "}
+                    <strong>3-2</strong> (tiebreak may be skipped), 4-3
+                    (tiebreak). If you skip the tiebreak, 3-2 is considered a
+                    valid final score.
                   </p>
                 </div>
               </div>
