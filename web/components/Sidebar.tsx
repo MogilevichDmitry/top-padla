@@ -89,7 +89,7 @@ export default function Sidebar() {
           className="flex items-center space-x-2"
           onClick={() => setIsOpen(false)}
         >
-          <h1 className="text-lg font-bold">TOP PADLA</h1>
+          <h1 className="text-lg font-bold">TOP PADLA1</h1>
         </Link>
         {isAdmin ? (
           <Link
@@ -204,7 +204,7 @@ export default function Sidebar() {
             onClick={() => setIsOpen(false)}
           >
             <div>
-              <h1 className="text-lg md:text-xl font-bold">TOP PADLA</h1>
+              <h1 className="text-lg md:text-xl font-bold">TOP PADLA1</h1>
               <p className="text-xs text-gray-400">Rating System</p>
             </div>
           </Link>
