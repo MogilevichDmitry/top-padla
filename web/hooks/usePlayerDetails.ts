@@ -75,6 +75,17 @@ interface PlayerDetails {
       winRate: number;
     }>;
   };
+  opponents: {
+    all: Array<{
+      id: number;
+      name: string;
+      rating: number;
+      games: number;
+      wins: number;
+      losses: number;
+      winRate: number;
+    }>;
+  };
 }
 
 export function usePlayerDetails(slug: string) {
