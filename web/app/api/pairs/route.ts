@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getPairs, getPlayers } from '@/lib/db';
 
+// Cache for 60 seconds
+export const revalidate = 60;
+
 export async function GET() {
   try {
     const [pairs, players] = await Promise.all([

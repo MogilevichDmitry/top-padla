@@ -93,6 +93,68 @@ export function calculateRatings(
   return ratings;
 }
 
+export interface MatchRatingChanges {
+  [playerId: number]: number;
+}
+
+/**
+ * Compute rating change for each player in each match, processing the full
+ * match history in chronological order (no time window).
+ */
+export function getMatchRatingChanges(
+  players: Player[],
+  matches: Match[]
+): Record<number, MatchRatingChanges> {
+  const ratings: RatingTable = {};
+
+  // Initialize ratings
+  players.forEach((player) => {
+    ratings[player.id] = START_RATING;
+  });
+
+  const changesByMatchId: Record<number, MatchRatingChanges> = {};
+
+  // Sort matches chronologically
+  const sortedMatches = [...matches].sort((a, b) => {
+    const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+    return dateCompare !== 0 ? dateCompare : a.id - b.id;
+  });
+
+  for (const match of sortedMatches) {
+    if (match.team_a.length === 2 && match.team_b.length === 2) {
+      const [a1, a2] = match.team_a;
+      const [b1, b2] = match.team_b;
+
+      const rA = (ratings[a1] + ratings[a2]) / 2.0;
+      const rB = (ratings[b1] + ratings[b2]) / 2.0;
+
+      const E = expected(rA, rB);
+      const T = getTByType(match.type);
+      const S = actualS(match.score_a, match.score_b, T, match.type);
+      const deltaTeam = K_BASE * getLByType(match.type) * (S - E);
+
+      const beforeA1 = ratings[a1];
+      const beforeA2 = ratings[a2];
+      const beforeB1 = ratings[b1];
+      const beforeB2 = ratings[b2];
+
+      ratings[a1] = ratings[a1] + deltaTeam;
+      ratings[a2] = ratings[a2] + deltaTeam;
+      ratings[b1] = ratings[b1] - deltaTeam;
+      ratings[b2] = ratings[b2] - deltaTeam;
+
+      changesByMatchId[match.id] = {
+        [a1]: ratings[a1] - beforeA1,
+        [a2]: ratings[a2] - beforeA2,
+        [b1]: ratings[b1] - beforeB1,
+        [b2]: ratings[b2] - beforeB2,
+      };
+    }
+  }
+
+  return changesByMatchId;
+}
+
 export interface PartnerStats {
   games: number;
   wins: number;
@@ -205,13 +267,19 @@ export function getPlayerStats(
     if (stats.games >= 3) {
       const wr = (stats.wins / stats.games) * 100;
       // For best partner: higher win rate wins, or if equal, more games wins
-      if (wr > bestPartnerWR || (wr === bestPartnerWR && stats.games > bestPartnerGames)) {
+      if (
+        wr > bestPartnerWR ||
+        (wr === bestPartnerWR && stats.games > bestPartnerGames)
+      ) {
         bestPartner = partnerId;
         bestPartnerWR = wr;
         bestPartnerGames = stats.games;
       }
       // For worst partner: lower win rate wins, or if equal, more games wins (worse record)
-      if (wr < worstPartnerWR || (wr === worstPartnerWR && stats.games > worstPartnerGames)) {
+      if (
+        wr < worstPartnerWR ||
+        (wr === worstPartnerWR && stats.games > worstPartnerGames)
+      ) {
         worstPartner = partnerId;
         worstPartnerWR = wr;
         worstPartnerGames = stats.games;

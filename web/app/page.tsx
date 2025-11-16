@@ -1,50 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { nameToSlug } from "@/lib/utils";
-
-interface PlayerWithRating {
-  id: number;
-  name: string;
-  rating: number;
-  matches: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-}
+import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
+import { useRatings } from "@/hooks/useRatings";
+import Loading from "@/components/Loading";
 
 export default function Home() {
-  const [standings, setStandings] = useState<PlayerWithRating[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: standings = [], isLoading, error } = useRatings();
 
-  useEffect(() => {
-    async function fetchStandings() {
-      try {
-        const response = await fetch("/api/ratings");
-        if (!response.ok) throw new Error("Failed to fetch ratings");
-        const data = await response.json();
-        setStandings(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStandings();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading standings...</p>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <Loading message="Loading standings..." />;
   }
 
   if (error) {
@@ -52,21 +17,26 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50 px-8">
         <div className="bg-red-50 border border-red-200 rounded-md p-6 max-w-md">
           <h2 className="text-red-800 font-semibold text-lg mb-2">Error</h2>
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600">
+            {error instanceof Error ? error.message : "An error occurred"}
+          </p>
         </div>
       </div>
     );
   }
 
+  const getRowBgClass = (index: number) => {
+    if (index < 3) return "bg-gray-50";
+    return "bg-white";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-900 to-orange-800 p-6">
-            <h2 className="text-white text-2xl font-semibold">
-              Player Standings
-            </h2>
-            <h5 className="text-gray-300 text-sm font-semibold mt-1">
+        <div className="bg-white rounded-lg overflow-hidden shadow-xl border border-gray-100">
+          <div className="bg-gradient-to-r from-blue-900 to-orange-800 p-6 md:p-8">
+            <h2 className="text-white text-3xl font-bold">Player Standings</h2>
+            <h5 className="text-gray-200 text-sm mt-2">
               Current rankings based on modified Elo rating system
             </h5>
           </div>
@@ -76,46 +46,55 @@ export default function Home() {
             {standings.map((player, index) => (
               <div
                 key={player.id}
-                className="bg-white p-4 border-b border-b-gray-200"
+                className={`p-4 border-b border-b-gray-200 ${getRowBgClass(
+                  index
+                )}`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-3">
                     <span
-                      className={`text-lg ${
+                      className={`text-lg w-4 ${
                         index < 3
-                          ? "font-bold text-gray-900"
-                          : "font-medium text-gray-600"
+                          ? "font-semibold text-gray-900"
+                          : "font-normal text-gray-600"
                       }`}
                     >
-                      {index + 1}
+                      #{index + 1}
                     </span>
                     <Link
                       href={`/players/${nameToSlug(player.name)}`}
-                      className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline"
+                      className="text-lg font-medium text-gray-900 hover:text-blue-600"
                     >
                       {player.name}
                     </Link>
                   </div>
-                  <span className="text-lg font-bold text-gray-900">
-                    {Math.floor(player.rating)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 font-medium">
+                      RATING
+                    </span>
+                    <span className="text-xl font-semibold text-gray-900">
+                      {Math.floor(player.rating)}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>{player.matches} matches</span>
-                  <span>
-                    {player.wins}-{player.losses}
-                  </span>
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      player.winRate >= 60
-                        ? "bg-green-100 text-green-800"
-                        : player.winRate >= 40
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {player.winRate.toFixed(1)}%
-                  </span>
+                  <div className="inline-flex items-center gap-1.5">
+                    <span className="text-xs text-gray-500">W-L:</span>
+                    <span className="font-medium">
+                      {player.wins}-{player.losses}
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5">
+                    <span className="text-xs text-gray-500">WR:</span>
+                    <span
+                      className={`px-2 py-0.5 text-xs font-semibold rounded text-center w-[70px] inline-block ${getWinRateBadgeClasses(
+                        player.winRate
+                      )}`}
+                    >
+                      {player.winRate.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -124,73 +103,75 @@ export default function Home() {
           {/* Desktop view - table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[50px]">
+              <thead>
+                <tr className="bg-gray-50 border-b-2 border-gray-200">
+                  <th className="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider max-w-[80px]">
                     Rank
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     Player
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                     Rating
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
                     Matches
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
                     W-L
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
                     Win %
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100">
                 {standings.map((player, index) => (
                   <tr
                     key={player.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className={`hover:bg-blue-50 transition-colors ${getRowBgClass(
+                      index
+                    )}`}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-left max-w-[50px]">
+                    <td className="px-8 py-3.5 whitespace-nowrap text-left max-w-[80px]">
                       <span
-                        className={`text-lg ${
+                        className={`text-base w-8 ${
                           index < 3
-                            ? "font-bold text-gray-900"
-                            : "font-medium text-gray-600"
+                            ? "font-semibold text-gray-900"
+                            : "font-medium text-gray-500"
                         }`}
                       >
-                        {index + 1}
+                        #{index + 1}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-3.5 whitespace-nowrap">
                       <Link
                         href={`/players/${nameToSlug(player.name)}`}
-                        className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline"
+                        className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors"
                       >
                         {player.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-left">
-                      <span className="text-lg font-semibold text-gray-900">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-left">
+                      <span className="text-xl font-semibold text-gray-900">
                         {Math.floor(player.rating)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                      {player.matches}
+                    <td className="px-6 py-3.5 whitespace-nowrap text-center">
+                      <span className="text-base font-normal text-gray-700">
+                        {player.matches}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                      {player.wins}-{player.losses}
+                    <td className="px-6 py-3.5 whitespace-nowrap text-center">
+                      <span className="text-base font-medium text-gray-700">
+                        {player.wins}-{player.losses}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-3.5 whitespace-nowrap text-right">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          player.winRate >= 60
-                            ? "bg-green-100 text-green-800"
-                            : player.winRate >= 40
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(
+                          player.winRate
+                        )}`}
                       >
                         {player.winRate.toFixed(1)}%
                       </span>
@@ -202,15 +183,15 @@ export default function Home() {
           </div>
 
           {standings.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">
+            <div className="text-center py-16">
+              <p className="text-gray-500 text-xl font-medium">
                 No players yet. Start by adding some matches!
               </p>
             </div>
           )}
         </div>
 
-        <div className="mt-8 text-center text-gray-600 text-sm">
+        <div className="mt-8 text-center text-gray-600 text-sm font-medium">
           <p>Powered by modified Elo rating system • Updates in real-time</p>
         </div>
       </div>

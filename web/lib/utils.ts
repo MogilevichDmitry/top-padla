@@ -21,3 +21,17 @@ export function slugToName(slug: string): string {
     .join(" ");
 }
 
+/**
+ * Get badge classes (text, background, border) for win rate display
+ * @param winRate - Win rate percentage (0-100)
+ * @returns String with all badge classes
+ */
+export function getWinRateBadgeClasses(winRate: number): string {
+  if (winRate >= 60)
+    return "text-green-900 bg-green-50 border border-green-200";
+  if (winRate >= 50)
+    return "text-green-700 bg-green-50 border border-green-200";
+  if (winRate >= 40)
+    return "text-orange-800 bg-orange-50 border border-orange-200";
+  return "text-red-800 bg-red-50 border border-red-200";
+}

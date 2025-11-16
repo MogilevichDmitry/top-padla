@@ -1,20 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { usePairs } from "@/hooks/usePairs";
+import { useRatings } from "@/hooks/useRatings";
+import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
 import Loading from "@/components/Loading";
-
-interface PairWithNames {
-  id: number;
-  player1_id: number;
-  player2_id: number;
-  player1_name: string;
-  player2_name: string;
-  rating: number;
-  matches: number;
-  wins: number;
-  losses: number;
-}
 
 const getPairIcon = (index: number, total: number): string => {
   // First pair always gets trophy
@@ -35,10 +26,23 @@ const getPairIcon = (index: number, total: number): string => {
 
 export default function PairsPage() {
   const { data: pairs = [], isLoading, error } = usePairs();
+  const { data: ratings = [] } = useRatings();
   const [sortBy, setSortBy] = useState<"rating" | "matches" | "winRate">(
     "rating"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Create a map of playerId -> { rank, rating } for quick lookup
+  const playerRankMap = useMemo(() => {
+    const map = new Map<number, { rank: number; rating: number }>();
+    ratings.forEach((player, index) => {
+      map.set(player.id, {
+        rank: index + 1,
+        rating: Math.floor(player.rating),
+      });
+    });
+    return map;
+  }, [ratings]);
 
   const handleSort = (field: "rating" | "matches" | "winRate") => {
     if (sortBy === field) {
@@ -74,6 +78,11 @@ export default function PairsPage() {
     }
     return sortOrder === "asc" ? comparison : -comparison;
   });
+
+  // Helper function to get player rank and rating info
+  const getPlayerInfo = (playerId: number) => {
+    return playerRankMap.get(playerId);
+  };
 
   if (isLoading) {
     return <Loading message="Loading pairs..." />;
@@ -118,8 +127,38 @@ export default function PairsPage() {
                         {iconMap.get(pair.id) || "🤝"}
                       </span>
                       <div className="flex flex-col font-semibold text-gray-900 text-base leading-tight">
-                        <span className="mb-0.5">{pair.player1_name}</span>
-                        <span>{pair.player2_name}</span>
+                        <span className="mb-0.5 inline-flex items-center">
+                          <Link
+                            href={`/players/${nameToSlug(pair.player1_name)}`}
+                            className="hover:text-blue-600 transition-colors"
+                          >
+                            {pair.player1_name}
+                          </Link>
+                          {(() => {
+                            const info = getPlayerInfo(pair.player1_id);
+                            return info ? (
+                              <span className="text-xs text-gray-500 font-normal ml-0.5">
+                                #{info.rank}
+                              </span>
+                            ) : null;
+                          })()}
+                        </span>
+                        <span className="inline-flex items-center">
+                          <Link
+                            href={`/players/${nameToSlug(pair.player2_name)}`}
+                            className="hover:text-blue-600 transition-colors"
+                          >
+                            {pair.player2_name}
+                          </Link>
+                          {(() => {
+                            const info = getPlayerInfo(pair.player2_id);
+                            return info ? (
+                              <span className="text-xs text-gray-500 font-normal ml-0.5">
+                                #{info.rank}
+                              </span>
+                            ) : null;
+                          })()}
+                        </span>
                       </div>
                     </div>
                     <span className="text-xl font-bold text-gray-900">
@@ -143,13 +182,9 @@ export default function PairsPage() {
                       <span className="text-gray-500">WR:</span>{" "}
                       {pair.matches > 0 ? (
                         <span
-                          className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
-                            winRate >= 60
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : winRate >= 40
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-red-50 text-red-700 border border-red-200"
-                          }`}
+                          className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(
+                            winRate
+                          )}`}
                         >
                           {winRate.toFixed(1)}%
                         </span>
@@ -266,8 +301,42 @@ export default function PairsPage() {
                             {iconMap.get(pair.id) || "🤝"}
                           </span>
                           <div className="flex flex-col text-sm font-semibold text-gray-900 leading-tight">
-                            <span className="mb-0.5">{pair.player1_name}</span>
-                            <span>{pair.player2_name}</span>
+                            <span className="mb-0.5 inline-flex items-center">
+                              <Link
+                                href={`/players/${nameToSlug(
+                                  pair.player1_name
+                                )}`}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                {pair.player1_name}
+                              </Link>
+                              {(() => {
+                                const info = getPlayerInfo(pair.player1_id);
+                                return info ? (
+                                  <span className="text-xs text-gray-500 font-normal ml-0.5">
+                                    #{info.rank}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </span>
+                            <span className="inline-flex items-center">
+                              <Link
+                                href={`/players/${nameToSlug(
+                                  pair.player2_name
+                                )}`}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                {pair.player2_name}
+                              </Link>
+                              {(() => {
+                                const info = getPlayerInfo(pair.player2_id);
+                                return info ? (
+                                  <span className="text-xs text-gray-500 font-normal ml-0.5">
+                                    #{info.rank}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -285,13 +354,9 @@ export default function PairsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         {pair.matches > 0 ? (
                           <span
-                            className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
-                              winRate >= 60
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : winRate >= 40
-                                ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                : "bg-red-50 text-red-700 border border-red-200"
-                            }`}
+                            className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(
+                              winRate
+                            )}`}
                           >
                             {winRate.toFixed(1)}%
                           </span>

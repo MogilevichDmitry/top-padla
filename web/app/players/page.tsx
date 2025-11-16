@@ -1,51 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { nameToSlug } from "@/lib/utils";
-
-interface PlayerWithStats {
-  id: number;
-  name: string;
-  tg_id: number | null;
-  rating: number;
-  matches: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  to6Wins: number;
-  to6Losses: number;
-  to4Wins: number;
-  to4Losses: number;
-  to3Wins: number;
-  to3Losses: number;
-}
+import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
+import { usePlayerStats } from "@/hooks/usePlayerStats";
+import Loading from "@/components/Loading";
 
 export default function PlayersPage() {
-  const [players, setPlayers] = useState<PlayerWithStats[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: players = [], isLoading, error } = usePlayerStats();
   const [sortBy, setSortBy] = useState<"rating" | "matches" | "winRate">(
     "rating"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-
-  useEffect(() => {
-    async function fetchPlayers() {
-      try {
-        const response = await fetch("/api/players/stats");
-        if (!response.ok) throw new Error("Failed to fetch players");
-        const data = await response.json();
-        setPlayers(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPlayers();
-  }, []);
 
   const handleSort = (field: "rating" | "matches" | "winRate") => {
     if (sortBy === field) {
@@ -86,15 +52,8 @@ export default function PlayersPage() {
     a.name.localeCompare(b.name)
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-500 text-sm">Loading players...</p>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <Loading message="Loading players..." />;
   }
 
   if (error) {
@@ -102,7 +61,9 @@ export default function PlayersPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-8">
         <div className="bg-white border border-red-200 rounded-md p-6 max-w-md">
           <h2 className="text-red-700 font-semibold text-lg mb-2">Error</h2>
-          <p className="text-red-600 text-sm">{error}</p>
+          <p className="text-red-600 text-sm">
+            {error instanceof Error ? error.message : "An error occurred"}
+          </p>
         </div>
       </div>
     );
@@ -129,15 +90,19 @@ export default function PlayersPage() {
                 className="bg-white p-4 border-b border-b-gray-200"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <Link
-                    href={`/players/${nameToSlug(player.name)}`}
-                    className="font-semibold text-gray-900 text-lg hover:text-blue-600 hover:underline"
-                  >
-                    {player.name}{" "}
-                    <span className="text-gray-400">
-                      (#{rankMap.get(player.id)})
-                    </span>
-                  </Link>
+                  <div className="inline-flex items-center">
+                    <Link
+                      href={`/players/${nameToSlug(player.name)}`}
+                      className="font-semibold text-gray-900 text-lg hover:text-blue-600"
+                    >
+                      {player.name}
+                    </Link>
+                    {rankMap.get(player.id) && (
+                      <span className="text-xs text-gray-500 font-normal ml-0.5">
+                        #{rankMap.get(player.id)}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xl font-bold text-gray-900">
                     {Math.floor(player.rating)}
                   </span>
@@ -175,15 +140,11 @@ export default function PlayersPage() {
                     )}
                   </div>
                   <div className="text-right">
-                    <span className="text-gray-500">Win Rate:</span>{" "}
+                    <span className="text-gray-500">WR:</span>{" "}
                     <span
-                      className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
-                        player.winRate >= 60
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : player.winRate >= 40
-                          ? "bg-amber-50 text-amber-700 border border-amber-200"
-                          : "bg-red-50 text-red-700 border border-red-200"
-                      }`}
+                      className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(
+                        player.winRate
+                      )}`}
                     >
                       {player.winRate.toFixed(1)}%
                     </span>
@@ -291,15 +252,19 @@ export default function PlayersPage() {
                     className="hover:bg-gray-50/50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Link
-                        href={`/players/${nameToSlug(player.name)}`}
-                        className="text-sm font-semibold text-gray-900 hover:text-blue-600 hover:underline"
-                      >
-                        {player.name}{" "}
-                        <span className="text-gray-400">
-                          (#{rankMap.get(player.id)})
-                        </span>
-                      </Link>
+                      <div className="inline-flex items-center">
+                        <Link
+                          href={`/players/${nameToSlug(player.name)}`}
+                          className="text-sm font-semibold text-gray-900 hover:text-blue-600"
+                        >
+                          {player.name}
+                        </Link>
+                        {rankMap.get(player.id) && (
+                          <span className="text-xs text-gray-500 font-normal ml-0.5">
+                            #{rankMap.get(player.id)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-left">
                       <span className="text-base font-bold text-gray-900">
@@ -314,13 +279,9 @@ export default function PlayersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span
-                        className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${
-                          player.winRate >= 60
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : player.winRate >= 40
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-red-50 text-red-700 border border-red-200"
-                        }`}
+                        className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(
+                          player.winRate
+                        )}`}
                       >
                         {player.winRate.toFixed(1)}%
                       </span>
@@ -375,7 +336,7 @@ export default function PlayersPage() {
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/players/${nameToSlug(player.name)}`}
-                      className="font-semibold text-gray-500 text-lg hover:text-blue-600 hover:underline"
+                      className="font-semibold text-gray-500 text-lg hover:text-blue-600"
                     >
                       {player.name}{" "}
                       <span className="text-xs text-gray-400 font-normal">
@@ -424,7 +385,7 @@ export default function PlayersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Link
                           href={`/players/${nameToSlug(player.name)}`}
-                          className="text-sm font-semibold text-gray-500 hover:text-blue-600 hover:underline"
+                          className="text-sm font-semibold text-gray-500 hover:text-blue-600"
                         >
                           {player.name}{" "}
                           <span className="text-xs text-gray-400 font-normal">

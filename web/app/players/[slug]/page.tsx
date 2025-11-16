@@ -354,7 +354,7 @@ export default function PlayerPage() {
               </h2>
               <Link
                 href={`/players/${nameToSlug(data.partners.best.name)}`}
-                className="block hover:underline"
+                className="block"
               >
                 <p className="text-xl font-semibold text-gray-900">
                   {data.partners.best.name}
@@ -372,7 +372,7 @@ export default function PlayerPage() {
               </h2>
               <Link
                 href={`/players/${nameToSlug(data.partners.worst.name)}`}
-                className="block hover:underline"
+                className="block"
               >
                 <p className="text-xl font-semibold text-gray-900">
                   {data.partners.worst.name}
@@ -414,7 +414,7 @@ export default function PlayerPage() {
                     <div className="flex items-center justify-between mb-2">
                       <Link
                         href={`/players/${nameToSlug(partner.name)}`}
-                        className="text-lg font-semibold text-blue-600 hover:underline"
+                        className="text-lg font-semibold text-blue-600"
                       >
                         {partner.name}
                       </Link>
@@ -556,7 +556,7 @@ export default function PlayerPage() {
                         <td className="py-2 px-4">
                           <Link
                             href={`/players/${nameToSlug(partner.name)}`}
-                            className="text-blue-600 hover:underline font-medium"
+                            className="text-blue-600 font-medium"
                           >
                             {partner.name}
                           </Link>
@@ -653,7 +653,7 @@ export default function PlayerPage() {
                                       href={`/players/${nameToSlug(
                                         partnerName
                                       )}`}
-                                      className="text-blue-600 hover:underline"
+                                      className="text-blue-600"
                                     >
                                       {partnerName}
                                     </Link>
@@ -668,7 +668,7 @@ export default function PlayerPage() {
                                   <span key={idx}>
                                     <Link
                                       href={`/players/${nameToSlug(name)}`}
-                                      className="text-blue-600 hover:underline"
+                                      className="text-blue-600"
                                     >
                                       {name}
                                     </Link>

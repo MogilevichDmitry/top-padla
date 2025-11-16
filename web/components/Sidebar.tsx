@@ -89,8 +89,24 @@ export default function Sidebar() {
           className="flex items-center space-x-2"
           onClick={() => setIsOpen(false)}
         >
-          <h1 className="text-lg font-bold">T🎾P PADLA</h1>
+          <h1 className="text-lg font-bold">TOP PADLA</h1>
         </Link>
+        {isAdmin ? (
+          <Link
+            href="/manage"
+            className="ml-auto mr-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+            onClick={() => setIsOpen(false)}
+          >
+            Manage
+          </Link>
+        ) : (
+          <button
+            onClick={handleLogin}
+            className="ml-auto mr-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+          >
+            Login
+          </button>
+        )}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
@@ -151,7 +167,24 @@ export default function Sidebar() {
               })}
             </nav>
             <div className="p-4 border-t border-gray-700 mt-auto">
-              <p className="text-xs text-gray-400 text-center">BOTTOM PADLA</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">BOTTOM PADLA</p>
+                {isAdmin ? (
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleLogin}
+                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                  >
+                    Login
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -202,6 +235,23 @@ export default function Sidebar() {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              href="/manage"
+              onClick={() => setIsOpen(false)}
+              className={`
+                flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
+                ${
+                  pathname === "/manage"
+                    ? "bg-blue-900 text-white shadow-lg"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                }
+              `}
+            >
+              <span className="text-xl">⚙️</span>
+              <span className="font-medium">Manage</span>
+            </Link>
+          )}
         </nav>
 
         {/* Footer */}
@@ -209,16 +259,18 @@ export default function Sidebar() {
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400">BOTTOM PADLA</p>
             {isAdmin ? (
-              <button
-                onClick={handleLogout}
-                className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-              >
-                Logout
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleLogout}
+                  className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                >
+                  Logout
+                </button>
+              </div>
             ) : (
               <button
                 onClick={handleLogin}
-                className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
               >
                 Login
               </button>
@@ -230,10 +282,14 @@ export default function Sidebar() {
       {showLogin && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm bg-white rounded-md border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Admin Login</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Admin Login
+            </h3>
             <form onSubmit={submitLogin} className="space-y-3">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Password</label>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Password
+                </label>
                 <input
                   type="password"
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -242,7 +298,9 @@ export default function Sidebar() {
                   autoFocus
                 />
               </div>
-              {loginError && <p className="text-sm text-red-600">{loginError}</p>}
+              {loginError && (
+                <p className="text-sm text-red-600">{loginError}</p>
+              )}
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"

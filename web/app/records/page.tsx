@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRecords } from "@/hooks/useRecords";
+import { usePlayers } from "@/hooks/usePlayers";
+import Loading from "@/components/Loading";
 
 interface LeagueRecords {
   highest_rating?: number;
@@ -35,37 +37,11 @@ interface Player {
 }
 
 export default function RecordsPage() {
-  const [records, setRecords] = useState<LeagueRecords | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: records, isLoading: recordsLoading, error: recordsError } = useRecords();
+  const { data: players = [], isLoading: playersLoading, error: playersError } = usePlayers();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [recordsRes, playersRes] = await Promise.all([
-          fetch("/api/records"),
-          fetch("/api/players"),
-        ]);
-
-        if (!recordsRes.ok || !playersRes.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const recordsData = await recordsRes.json();
-        const playersData = await playersRes.json();
-
-        setRecords(recordsData);
-        setPlayers(playersData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, []);
+  const isLoading = recordsLoading || playersLoading;
+  const error = recordsError || playersError;
 
   const getPlayerName = (playerId?: number): string => {
     if (!playerId) return "Unknown";
@@ -83,23 +59,29 @@ export default function RecordsPage() {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
+    return <Loading message="Loading records..." />;
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-500 text-sm">Loading records...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-8">
+        <div className="bg-white border border-red-200 rounded-md p-6 max-w-md">
+          <h2 className="text-red-700 font-semibold text-lg mb-2">Error</h2>
+          <p className="text-red-600 text-sm">
+            {error instanceof Error ? error.message : "An error occurred"}
+          </p>
         </div>
       </div>
     );
   }
 
-  if (error || !records) {
+  if (!records) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-8">
         <div className="bg-white border border-red-200 rounded-md p-6 max-w-md">
           <h2 className="text-red-700 font-semibold text-lg mb-2">Error</h2>
-          <p className="text-red-600 text-sm">{error || "No records found"}</p>
+          <p className="text-red-600 text-sm">No records found</p>
         </div>
       </div>
     );
