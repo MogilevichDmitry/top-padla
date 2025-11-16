@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
 import Loading from "@/components/Loading";
 
 export default function PlayersPage() {
+  const router = useRouter();
   const { data: players = [], isLoading, error } = usePlayerStats();
   const [sortBy, setSortBy] = useState<"rating" | "matches" | "winRate">(
     "rating"
@@ -249,13 +251,17 @@ export default function PlayersPage() {
                 {sortedActivePlayers.map((player) => (
                   <tr
                     key={player.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+                    className="group hover:bg-blue-50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      router.push(`/players/${nameToSlug(player.name)}`);
+                    }}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="inline-flex items-center">
                         <Link
                           href={`/players/${nameToSlug(player.name)}`}
-                          className="text-sm font-semibold text-gray-900 hover:text-blue-600"
+                          className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {player.name}
                         </Link>

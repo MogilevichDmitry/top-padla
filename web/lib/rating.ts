@@ -177,6 +177,7 @@ export interface PlayerStats {
   worstPartner?: number;
   worstPartnerWR?: number;
   partnerStats: { [playerId: number]: PartnerStats };
+  opponentStats: { [playerId: number]: PartnerStats };
 }
 
 export function getPlayerStats(
@@ -193,6 +194,7 @@ export function getPlayerStats(
   let to3Wins = 0,
     to3Losses = 0;
   const partnerStats: { [key: number]: PartnerStats } = {};
+  const opponentStats: { [key: number]: PartnerStats } = {};
 
   for (const match of matches) {
     if (match.team_a.includes(playerId) && match.team_a.length === 2) {
@@ -211,6 +213,16 @@ export function getPlayerStats(
         partnerStats[partnerId].games++;
         if (won) partnerStats[partnerId].wins++;
         else partnerStats[partnerId].losses++;
+      }
+
+      // Track opponent stats (players from team_b)
+      for (const opponentId of match.team_b) {
+        if (!opponentStats[opponentId]) {
+          opponentStats[opponentId] = { games: 0, wins: 0, losses: 0 };
+        }
+        opponentStats[opponentId].games++;
+        if (won) opponentStats[opponentId].wins++;
+        else opponentStats[opponentId].losses++;
       }
 
       if (match.type === "to6") {
@@ -239,6 +251,16 @@ export function getPlayerStats(
         partnerStats[partnerId].games++;
         if (won) partnerStats[partnerId].wins++;
         else partnerStats[partnerId].losses++;
+      }
+
+      // Track opponent stats (players from team_a)
+      for (const opponentId of match.team_a) {
+        if (!opponentStats[opponentId]) {
+          opponentStats[opponentId] = { games: 0, wins: 0, losses: 0 };
+        }
+        opponentStats[opponentId].games++;
+        if (won) opponentStats[opponentId].wins++;
+        else opponentStats[opponentId].losses++;
       }
 
       if (match.type === "to6") {
@@ -303,6 +325,7 @@ export function getPlayerStats(
     worstPartner,
     worstPartnerWR: worstPartner ? worstPartnerWR : undefined,
     partnerStats,
+    opponentStats,
   };
 }
 

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { nameToSlug } from "@/lib/utils";
+import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
 import { usePlayerDetails } from "@/hooks/usePlayerDetails";
 import Loading from "@/components/Loading";
 
 export default function PlayerPage() {
+  const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
   const { data, isLoading, error } = usePlayerDetails(slug);
@@ -15,6 +16,10 @@ export default function PlayerPage() {
     "rating"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [opponentSortBy, setOpponentSortBy] = useState<"rating" | "games" | "winRate">(
+    "rating"
+  );
+  const [opponentSortOrder, setOpponentSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const matchesPerPage = 10;
 
@@ -409,12 +414,16 @@ export default function PlayerPage() {
                 .map((partner) => (
                   <div
                     key={partner.id}
-                    className="border-b border-gray-200 p-4"
+                    className="group border-b border-gray-200 p-4 cursor-pointer hover:bg-blue-50 transition-colors"
+                    onClick={() => {
+                      router.push(`/players/${nameToSlug(partner.name)}`);
+                    }}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <Link
                         href={`/players/${nameToSlug(partner.name)}`}
-                        className="text-lg font-semibold text-blue-600"
+                        className="text-lg font-semibold text-blue-600 group-hover:text-blue-700 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {partner.name}
                       </Link>
@@ -436,8 +445,8 @@ export default function PlayerPage() {
                         </span>
                       </div>
                       <div className="col-span-2 text-right">
-                        <span className="text-gray-500">Win Rate:</span>{" "}
-                        <span className="font-semibold text-gray-900">
+                        <span className="text-gray-500">WR:</span>{" "}
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(partner.winRate)}`}>
                           {partner.winRate.toFixed(1)}%
                         </span>
                       </div>
@@ -551,12 +560,16 @@ export default function PlayerPage() {
                     .map((partner) => (
                       <tr
                         key={partner.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="group border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          router.push(`/players/${nameToSlug(partner.name)}`);
+                        }}
                       >
                         <td className="py-2 px-4">
                           <Link
                             href={`/players/${nameToSlug(partner.name)}`}
-                            className="text-blue-600 font-medium"
+                            className="text-blue-600 font-medium group-hover:text-blue-700 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {partner.name}
                           </Link>
@@ -570,8 +583,216 @@ export default function PlayerPage() {
                         <td className="py-2 px-4 text-center text-gray-900">
                           {partner.wins}-{partner.losses}
                         </td>
-                        <td className="py-2 px-4 text-center text-gray-900 font-semibold">
-                          {partner.winRate.toFixed(1)}%
+                        <td className="py-2 px-4 text-center">
+                          <span className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(partner.winRate)}`}>
+                            {partner.winRate.toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* All Opponents */}
+        {data.opponents?.all && data.opponents.all.length > 0 && (
+          <div className="bg-white rounded-md py-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 px-6">
+              All Opponents
+            </h2>
+
+            {/* Mobile view - cards */}
+            <div className="md:hidden space-y-0 px-3">
+              {[...data.opponents.all]
+                .sort((a, b) => {
+                  let comparison = 0;
+                  if (opponentSortBy === "rating") {
+                    comparison = a.rating - b.rating;
+                  } else if (opponentSortBy === "games") {
+                    comparison = a.games - b.games;
+                  } else if (opponentSortBy === "winRate") {
+                    comparison = a.winRate - b.winRate;
+                  }
+                  return opponentSortOrder === "asc" ? comparison : -comparison;
+                })
+                .map((opponent) => (
+                  <div
+                    key={opponent.id}
+                    className="group border-b border-gray-200 p-4 cursor-pointer hover:bg-blue-50 transition-colors"
+                    onClick={() => {
+                      router.push(`/players/${nameToSlug(opponent.name)}`);
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Link
+                        href={`/players/${nameToSlug(opponent.name)}`}
+                        className="text-lg font-semibold text-blue-600 group-hover:text-blue-700 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {opponent.name}
+                      </Link>
+                      <span className="text-xl font-bold text-gray-900">
+                        {Math.floor(opponent.rating)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Games:</span>{" "}
+                        <span className="font-medium text-gray-900">
+                          {opponent.games}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-gray-500">W-L:</span>{" "}
+                        <span className="font-medium text-gray-900">
+                          {opponent.wins}-{opponent.losses}
+                        </span>
+                      </div>
+                      <div className="col-span-2 text-right">
+                        <span className="text-gray-500">WR:</span>{" "}
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded text-center inline-block w-[70px] ${getWinRateBadgeClasses(opponent.winRate)}`}>
+                          {opponent.winRate.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* Desktop view - table */}
+            <div className="hidden md:block overflow-x-auto px-2">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 px-4 text-gray-700">
+                      Opponent
+                    </th>
+                    <th
+                      className="text-left py-2 px-4 text-gray-700 cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => {
+                        if (opponentSortBy === "rating") {
+                          setOpponentSortOrder(opponentSortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setOpponentSortBy("rating");
+                          setOpponentSortOrder("desc");
+                        }
+                      }}
+                    >
+                      Rating
+                      <span className="ml-1">
+                        {opponentSortBy === "rating" ? (
+                          opponentSortOrder === "asc" ? (
+                            "↑"
+                          ) : (
+                            "↓"
+                          )
+                        ) : (
+                          <span className="opacity-0 group-hover:opacity-50">
+                            ↓
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                    <th
+                      className="text-center py-2 px-4 text-gray-700 cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => {
+                        if (opponentSortBy === "games") {
+                          setOpponentSortOrder(opponentSortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setOpponentSortBy("games");
+                          setOpponentSortOrder("desc");
+                        }
+                      }}
+                    >
+                      Games
+                      <span className="ml-1">
+                        {opponentSortBy === "games" ? (
+                          opponentSortOrder === "asc" ? (
+                            "↑"
+                          ) : (
+                            "↓"
+                          )
+                        ) : (
+                          <span className="opacity-0 group-hover:opacity-50">
+                            ↓
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                    <th className="text-center py-2 px-4 text-gray-700">W-L</th>
+                    <th
+                      className="text-center py-2 px-4 text-gray-700 cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => {
+                        if (opponentSortBy === "winRate") {
+                          setOpponentSortOrder(opponentSortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setOpponentSortBy("winRate");
+                          setOpponentSortOrder("desc");
+                        }
+                      }}
+                    >
+                      Win Rate
+                      <span className="ml-1">
+                        {opponentSortBy === "winRate" ? (
+                          opponentSortOrder === "asc" ? (
+                            "↑"
+                          ) : (
+                            "↓"
+                          )
+                        ) : (
+                          <span className="opacity-0 group-hover:opacity-50">
+                            ↓
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...data.opponents.all]
+                    .sort((a, b) => {
+                      let comparison = 0;
+                      if (opponentSortBy === "rating") {
+                        comparison = a.rating - b.rating;
+                      } else if (opponentSortBy === "games") {
+                        comparison = a.games - b.games;
+                      } else if (opponentSortBy === "winRate") {
+                        comparison = a.winRate - b.winRate;
+                      }
+                      return opponentSortOrder === "asc" ? comparison : -comparison;
+                    })
+                    .map((opponent) => (
+                      <tr
+                        key={opponent.id}
+                        className="group border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          router.push(`/players/${nameToSlug(opponent.name)}`);
+                        }}
+                      >
+                        <td className="py-2 px-4">
+                          <Link
+                            href={`/players/${nameToSlug(opponent.name)}`}
+                            className="text-blue-600 font-medium group-hover:text-blue-700 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {opponent.name}
+                          </Link>
+                        </td>
+                        <td className="py-2 px-4 text-left text-gray-900">
+                          {Math.floor(opponent.rating)}
+                        </td>
+                        <td className="py-2 px-4 text-center text-gray-900">
+                          {opponent.games}
+                        </td>
+                        <td className="py-2 px-4 text-center text-gray-900">
+                          {opponent.wins}-{opponent.losses}
+                        </td>
+                        <td className="py-2 px-4 text-center">
+                          <span className={`inline-block px-3 py-1 text-sm font-semibold rounded text-center w-[70px] ${getWinRateBadgeClasses(opponent.winRate)}`}>
+                            {opponent.winRate.toFixed(1)}%
+                          </span>
                         </td>
                       </tr>
                     ))}

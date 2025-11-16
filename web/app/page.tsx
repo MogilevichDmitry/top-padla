@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
 import { useRatings } from "@/hooks/useRatings";
 import Loading from "@/components/Loading";
 
 export default function Home() {
+  const router = useRouter();
   const { data: standings = [], isLoading, error } = useRatings();
 
   if (isLoading) {
@@ -129,9 +131,12 @@ export default function Home() {
                 {standings.map((player, index) => (
                   <tr
                     key={player.id}
-                    className={`hover:bg-blue-50 transition-colors ${getRowBgClass(
+                    className={`group hover:bg-blue-50 transition-colors cursor-pointer ${getRowBgClass(
                       index
                     )}`}
+                    onClick={() => {
+                      router.push(`/players/${nameToSlug(player.name)}`);
+                    }}
                   >
                     <td className="px-8 py-3.5 whitespace-nowrap text-left max-w-[80px]">
                       <span
@@ -147,7 +152,8 @@ export default function Home() {
                     <td className="px-6 py-3.5 whitespace-nowrap">
                       <Link
                         href={`/players/${nameToSlug(player.name)}`}
-                        className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                        className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {player.name}
                       </Link>

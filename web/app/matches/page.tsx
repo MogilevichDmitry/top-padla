@@ -56,6 +56,15 @@ export default function MatchesPage() {
       .catch(() => setIsAdmin(false));
   }, []);
 
+  // Check if match can be deleted (last 20 matches and not older than 2 weeks)
+  function canDeleteMatch(match: Match, index: number): boolean {
+    if (index >= 20) return false; // Only last 20 matches
+    const matchDate = new Date(match.date);
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    return matchDate >= twoWeeksAgo;
+  }
+
   async function handleDeleteMatch(id: number) {
     if (!isAdmin || deletingIds.has(id)) return;
     setDeletingIds((prev) => new Set(prev).add(id));
@@ -222,7 +231,7 @@ export default function MatchesPage() {
                     <span className="text-xs text-gray-500 font-medium">
                       {formatDate(match.date)}
                     </span>
-                    {isAdmin && (
+                    {isAdmin && canDeleteMatch(match, index) && (
                       <button
                         type="button"
                         onClick={() => openConfirm(match.id)}
@@ -334,7 +343,7 @@ export default function MatchesPage() {
                     <div className="flex items-center justify-center space-x-4 md:shrink-0 md:px-6">
                       <div
                         className={`text-3xl md:text-4xl font-bold ${
-                          teamAWon ? "text-green-600" : "text-gray-300"
+                          teamAWon ? "text-gray-900" : "text-gray-300"
                         }`}
                       >
                         {match.score_a}
@@ -342,7 +351,7 @@ export default function MatchesPage() {
                       <div className="text-gray-300 text-xl font-light">—</div>
                       <div
                         className={`text-3xl md:text-4xl font-bold ${
-                          !teamAWon ? "text-green-600" : "text-gray-300"
+                          !teamAWon ? "text-gray-900" : "text-gray-300"
                         }`}
                       >
                         {match.score_b}

@@ -66,6 +66,7 @@ export async function GET(
         worstPartner: fullStats.worstPartner, // Use fresh calculation instead of cache
         worstPartnerWR: fullStats.worstPartnerWR, // Use fresh calculation instead of cache
         partnerStats: fullStats.partnerStats, // Need full partner stats for "All Partners" table
+        opponentStats: fullStats.opponentStats, // Need full opponent stats for "All Opponents" table
       };
     } else {
       // Fallback to calculation if cache is missing
@@ -205,6 +206,32 @@ export async function GET(
       )
     );
 
+    // Get all opponents with stats
+    const opponents = await Promise.all(
+      Object.entries(stats.opponentStats).map(
+        async ([opponentId, opponentStats]) => {
+          const opponentIdNum = parseInt(opponentId);
+          const name = await getPlayerName(opponentIdNum);
+
+          // Use player rating (not pair rating) for opponents
+          const opponentRating = ratings[opponentIdNum] || 1000;
+
+          return {
+            id: opponentIdNum,
+            name,
+            rating: opponentRating,
+            games: opponentStats.games,
+            wins: opponentStats.wins,
+            losses: opponentStats.losses,
+            winRate:
+              opponentStats.games > 0
+                ? (opponentStats.wins / opponentStats.games) * 100
+                : 0,
+          };
+        }
+      )
+    );
+
     // Calculate progress stats
     const ratingsOnly = ratingHistory.map((h) => h.rating);
     const peakRating = ratingsOnly.length > 0 ? Math.max(...ratingsOnly) : 0;
@@ -253,6 +280,9 @@ export async function GET(
             }
           : null,
         all: partners,
+      },
+      opponents: {
+        all: opponents,
       },
     });
   } catch (error) {
