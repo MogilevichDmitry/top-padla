@@ -51,6 +51,22 @@ export async function getPairs(): Promise<Pair[]> {
   return rows;
 }
 
+export async function createPlayer(name: string, tgId: number | null = null): Promise<Player> {
+  // Enforce unique name (case-insensitive) by checking first
+  const existing = await sql<Player>`
+    SELECT * FROM players WHERE LOWER(name) = LOWER(${name}) LIMIT 1
+  `;
+  if (existing.rows.length > 0) {
+    return existing.rows[0];
+  }
+  const { rows } = await sql<Player>`
+    INSERT INTO players (name, tg_id)
+    VALUES (${name}, ${tgId})
+    RETURNING *
+  `;
+  return rows[0];
+}
+
 export async function createMatch(match: Omit<Match, "id">): Promise<Match> {
   // Convert arrays to PostgreSQL array format
   const teamAStr = `{${match.team_a.join(",")}}`;
