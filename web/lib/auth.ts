@@ -23,13 +23,19 @@ export function createAdminToken(): string {
 
 export function verifyAdminToken(token: string | undefined | null): boolean {
   if (!token) return false;
-  const [payload, sigPart] = token.split(";sig=");
-  if (!payload || !sigPart) return false;
-  const expected = crypto
-    .createHmac("sha256", getSecret())
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sigPart));
+  try {
+    const [payload, sigPart] = token.split(";sig=");
+    if (!payload || !sigPart) return false;
+    const expected = crypto
+      .createHmac("sha256", getSecret())
+      .update(payload)
+      .digest("hex");
+    // timingSafeEqual requires equal-length buffers
+    if (expected.length !== sigPart.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sigPart));
+  } catch {
+    return false;
+  }
 }
 
 export function setAdminCookie(res: NextResponse): void {
