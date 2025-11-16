@@ -1,86 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { nameToSlug } from "@/lib/utils";
-
-interface PlayerDetails {
-  player: {
-    id: number;
-    name: string;
-    rating: number;
-    rank: number;
-  };
-  stats: {
-    matches: number;
-    wins: number;
-    losses: number;
-    winRate: number;
-    to6Wins: number;
-    to6Losses: number;
-    to4Wins: number;
-    to4Losses: number;
-    to3Wins: number;
-    to3Losses: number;
-  };
-  streaks: {
-    best_win: number;
-    best_win_date: string | null;
-    worst_loss: number;
-    worst_loss_date: string | null;
-    current_streak: number;
-    current_streak_type: "win" | "loss" | null;
-    current_streak_start_date: string | null;
-  };
-  progress: {
-    currentRating: number;
-    startRating: number;
-    peakRating: number;
-    minRating: number;
-    ratingChange: number;
-    peakDate: string | null;
-    history: { date: string; rating: number }[];
-  };
-  performance: {
-    vsStrong: { total: number; wins: number; losses: number; winRate: number };
-    vsWeak: { total: number; wins: number; losses: number; winRate: number };
-    vsEqual: { total: number; wins: number; losses: number; winRate: number };
-    currentRating: number;
-  };
-  matches: Array<{
-    id: number;
-    date: string;
-    type: "to6" | "to4" | "to3";
-    team_a: number[];
-    team_b: number[];
-    team_a_names: string[];
-    team_b_names: string[];
-    team_a_ids: number[];
-    team_b_ids: number[];
-    score_a: number;
-    score_b: number;
-  }>;
-  partners: {
-    best: { id: number; name: string; winRate: number } | null;
-    worst: { id: number; name: string; winRate: number } | null;
-    all: Array<{
-      id: number;
-      name: string;
-      rating: number;
-      games: number;
-      wins: number;
-      losses: number;
-      winRate: number;
-    }>;
-  };
-}
+import { usePlayerDetails } from "@/hooks/usePlayerDetails";
+import Loading from "@/components/Loading";
 
 export default function PlayerPage() {
   const params = useParams();
-  const [data, setData] = useState<PlayerDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const slug = params.slug as string;
+  const { data, isLoading, error } = usePlayerDetails(slug);
   const [sortBy, setSortBy] = useState<"rating" | "games" | "winRate">(
     "rating"
   );
@@ -88,45 +18,36 @@ export default function PlayerPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const matchesPerPage = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`/api/players/${params.slug}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch player data");
-        }
-        const playerData = await response.json();
-        setData(playerData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (isLoading) {
+    return <Loading message="Loading player details..." />;
+  }
 
-    if (params.slug) {
-      fetchData();
-    }
-  }, [params.slug]);
-
-  if (loading) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white rounded-md p-8 text-center">
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-red-600">
+              {error instanceof Error ? error.message : String(error)}
+            </p>
+            <Link
+              href="/players"
+              className="mt-4 inline-block text-blue-600 hover:underline"
+            >
+              ← Back to Players
+            </Link>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !data) {
+  if (!data || !data.player) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white rounded-md p-8 text-center">
-            <p className="text-red-600">{error || "Player not found"}</p>
+            <p className="text-gray-600">Player not found</p>
             <Link
               href="/players"
               className="mt-4 inline-block text-blue-600 hover:underline"
@@ -544,7 +465,7 @@ export default function PlayerPage() {
                         }
                       }}
                     >
-                      Rating
+                      Pair Rating
                       <span className="ml-1">
                         {sortBy === "rating" ? (
                           sortOrder === "asc" ? (

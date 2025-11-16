@@ -195,20 +195,26 @@ export function getPlayerStats(
   // Find best and worst partners (minimum 3 games)
   let bestPartner: number | undefined;
   let bestPartnerWR = 0;
+  let bestPartnerGames = 0;
   let worstPartner: number | undefined;
   let worstPartnerWR = 100;
+  let worstPartnerGames = Infinity;
 
   for (const [partnerIdStr, stats] of Object.entries(partnerStats)) {
     const partnerId = parseInt(partnerIdStr);
     if (stats.games >= 3) {
       const wr = (stats.wins / stats.games) * 100;
-      if (wr > bestPartnerWR) {
+      // For best partner: higher win rate wins, or if equal, more games wins
+      if (wr > bestPartnerWR || (wr === bestPartnerWR && stats.games > bestPartnerGames)) {
         bestPartner = partnerId;
         bestPartnerWR = wr;
+        bestPartnerGames = stats.games;
       }
-      if (wr < worstPartnerWR) {
+      // For worst partner: lower win rate wins, or if equal, more games wins (worse record)
+      if (wr < worstPartnerWR || (wr === worstPartnerWR && stats.games > worstPartnerGames)) {
         worstPartner = partnerId;
         worstPartnerWR = wr;
+        worstPartnerGames = stats.games;
       }
     }
   }

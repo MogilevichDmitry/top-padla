@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPlayers, getMatches, getPlayerName } from "@/lib/db";
+import { getPlayers, getMatches, getPlayerName, Pair } from "@/lib/db";
+import { sql } from "@vercel/postgres";
 import {
   calculateRatings,
   getPlayerStats,
@@ -8,6 +9,10 @@ import {
 } from "@/lib/rating";
 import { getPlayerStreaks } from "@/lib/records";
 import { nameToSlug } from "@/lib/utils";
+import { getCachedPlayerStat, getCachedPlayerStats } from "@/lib/cache";
+
+// Cache for 60 seconds
+export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,
@@ -28,26 +33,86 @@ export async function GET(
 
     const playerId = player.id;
 
-    // Calculate current ratings
+    // Calculate ratings (needed for rank and other calculations)
     const ratings = calculateRatings(players, matches);
 
-    // Get player stats
-    const stats = getPlayerStats(playerId, matches);
+    // Try to get cached stats first, fallback to calculation
+    let cachedStat: Awaited<ReturnType<typeof getCachedPlayerStat>> | null =
+      null;
+    try {
+      cachedStat = await getCachedPlayerStat(playerId);
+    } catch (cacheError) {
+      console.warn("Cache not available, using calculation:", cacheError);
+    }
 
-    // Calculate player rank (only among active players with matches)
-    const sortedActivePlayers = players
-      .map((p) => {
-        const playerStats = getPlayerStats(p.id, matches);
-        return {
-          id: p.id,
-          rating: ratings[p.id] || 1000,
-          matches: playerStats.matches,
-        };
-      })
-      .filter((p) => p.matches > 0) // Only players with matches
-      .sort((a, b) => b.rating - a.rating);
-    const playerRank =
-      sortedActivePlayers.findIndex((p) => p.id === playerId) + 1;
+    let stats: ReturnType<typeof getPlayerStats>;
+
+    if (cachedStat) {
+      // Use cached stats, but still need partnerStats for detailed view
+      const fullStats = getPlayerStats(playerId, matches);
+      stats = {
+        matches: Number(cachedStat.matches),
+        wins: Number(cachedStat.wins),
+        losses: Number(cachedStat.losses),
+        winRate: Number(cachedStat.win_rate),
+        to6Wins: Number(cachedStat.to6_wins),
+        to6Losses: Number(cachedStat.to6_losses),
+        to4Wins: Number(cachedStat.to4_wins),
+        to4Losses: Number(cachedStat.to4_losses),
+        to3Wins: Number(cachedStat.to3_wins),
+        to3Losses: Number(cachedStat.to3_losses),
+        bestPartner: fullStats.bestPartner, // Use fresh calculation instead of cache
+        bestPartnerWR: fullStats.bestPartnerWR, // Use fresh calculation instead of cache
+        worstPartner: fullStats.worstPartner, // Use fresh calculation instead of cache
+        worstPartnerWR: fullStats.worstPartnerWR, // Use fresh calculation instead of cache
+        partnerStats: fullStats.partnerStats, // Need full partner stats for "All Partners" table
+      };
+    } else {
+      // Fallback to calculation if cache is missing
+      stats = getPlayerStats(playerId, matches);
+    }
+
+    // Calculate player rank - try cached stats first, fallback to calculation
+    let playerRank: number;
+    try {
+      const allCachedStats = await getCachedPlayerStats();
+      if (allCachedStats.length > 0) {
+        const sortedActivePlayers = allCachedStats
+          .filter((cached) => Number(cached.matches) > 0)
+          .sort((a, b) => Number(b.rating) - Number(a.rating));
+        playerRank =
+          sortedActivePlayers.findIndex((p) => p.player_id === playerId) + 1;
+      } else {
+        // Fallback to calculation
+        const sortedActivePlayers = players
+          .map((p) => {
+            const playerStats = getPlayerStats(p.id, matches);
+            return {
+              id: p.id,
+              rating: ratings[p.id] || 1000,
+              matches: playerStats.matches,
+            };
+          })
+          .filter((p) => p.matches > 0)
+          .sort((a, b) => b.rating - a.rating);
+        playerRank =
+          sortedActivePlayers.findIndex((p) => p.id === playerId) + 1;
+      }
+    } catch (rankError) {
+      // Fallback to calculation if cache fails
+      const sortedActivePlayers = players
+        .map((p) => {
+          const playerStats = getPlayerStats(p.id, matches);
+          return {
+            id: p.id,
+            rating: ratings[p.id] || 1000,
+            matches: playerStats.matches,
+          };
+        })
+        .filter((p) => p.matches > 0)
+        .sort((a, b) => b.rating - a.rating);
+      playerRank = sortedActivePlayers.findIndex((p) => p.id === playerId) + 1;
+    }
 
     // Get rating history for progress
     const ratingHistory = getRatingHistory(playerId, players, matches);
@@ -99,16 +164,35 @@ export async function GET(
       ? await getPlayerName(stats.worstPartner)
       : undefined;
 
+    // Get all pairs to find pair ratings
+    const { rows: allPairs } = await sql<Pair>`
+      SELECT * FROM pairs
+    `;
+
+    // Create a map of pair ratings: key is sorted player IDs (e.g., "1-2" or "2-1")
+    const pairRatingMap = new Map<string, number>();
+    for (const pair of allPairs) {
+      const key1 = `${pair.player1_id}-${pair.player2_id}`;
+      const key2 = `${pair.player2_id}-${pair.player1_id}`;
+      pairRatingMap.set(key1, pair.rating);
+      pairRatingMap.set(key2, pair.rating);
+    }
+
     // Get all partners with stats
     const partners = await Promise.all(
       Object.entries(stats.partnerStats).map(
         async ([partnerId, partnerStats]) => {
           const partnerIdNum = parseInt(partnerId);
           const name = await getPlayerName(partnerIdNum);
+
+          // Find pair rating (check both orders)
+          const pairKey = `${playerId}-${partnerIdNum}`;
+          const pairRating = pairRatingMap.get(pairKey) || 1000;
+
           return {
             id: partnerIdNum,
             name,
-            rating: ratings[partnerIdNum] || 1000,
+            rating: pairRating, // Use pair rating instead of player rating
             games: partnerStats.games,
             wins: partnerStats.wins,
             losses: partnerStats.losses,

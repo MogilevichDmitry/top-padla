@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { usePairs } from "@/hooks/usePairs";
+import Loading from "@/components/Loading";
 
 interface PairWithNames {
   id: number;
@@ -32,30 +34,11 @@ const getPairIcon = (index: number, total: number): string => {
 };
 
 export default function PairsPage() {
-  const [pairs, setPairs] = useState<PairWithNames[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: pairs = [], isLoading, error } = usePairs();
   const [sortBy, setSortBy] = useState<"rating" | "matches" | "winRate">(
     "rating"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-
-  useEffect(() => {
-    async function fetchPairs() {
-      try {
-        const response = await fetch("/api/pairs");
-        if (!response.ok) throw new Error("Failed to fetch pairs");
-        const data = await response.json();
-        setPairs(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPairs();
-  }, []);
 
   const handleSort = (field: "rating" | "matches" | "winRate") => {
     if (sortBy === field) {
@@ -92,15 +75,8 @@ export default function PairsPage() {
     return sortOrder === "asc" ? comparison : -comparison;
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-500 text-sm">Loading pairs...</p>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <Loading message="Loading pairs..." />;
   }
 
   if (error) {
@@ -108,7 +84,9 @@ export default function PairsPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-8">
         <div className="bg-white border border-red-200 rounded-md p-6 max-w-md">
           <h2 className="text-red-700 font-semibold text-lg mb-2">Error</h2>
-          <p className="text-red-600 text-sm">{error}</p>
+          <p className="text-red-600 text-sm">
+            {error instanceof Error ? error.message : "An error occurred"}
+          </p>
         </div>
       </div>
     );
