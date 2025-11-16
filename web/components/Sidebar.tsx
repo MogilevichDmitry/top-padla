@@ -17,6 +17,10 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Lock scroll when menu is open on mobile
   useEffect(() => {
@@ -39,26 +43,41 @@ export default function Sidebar() {
   }, []);
 
   async function handleLogin() {
-    const pwd = typeof window !== "undefined" ? window.prompt("Enter admin password") : null;
-    if (!pwd) return;
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pwd }),
-    });
-    if (res.ok) {
-      setIsAdmin(true);
-      // close mobile menu if open
-      setIsOpen(false);
-    } else {
-      alert("Invalid password");
-    }
+    setShowLogin(true);
+    setPassword("");
+    setLoginError(null);
   }
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setIsAdmin(false);
     setIsOpen(false);
+  }
+
+  async function submitLogin(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!password) return;
+    setIsSubmitting(true);
+    setLoginError(null);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        setIsAdmin(true);
+        setShowLogin(false);
+        setPassword("");
+        setIsOpen(false);
+      } else {
+        setLoginError("Invalid password");
+      }
+    } catch {
+      setLoginError("Login failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -207,6 +226,47 @@ export default function Sidebar() {
           </div>
         </div>
       </aside>
+      {/* Login Modal */}
+      {showLogin && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm bg-white rounded-md border border-gray-200 p-5">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Admin Login</h3>
+            <form onSubmit={submitLogin} className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Password</label>
+                <input
+                  type="password"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              {loginError && <p className="text-sm text-red-600">{loginError}</p>}
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLogin(false);
+                    setPassword("");
+                    setLoginError(null);
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !password}
+                  className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
+                >
+                  {isSubmitting ? "Logging in..." : "Login"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
