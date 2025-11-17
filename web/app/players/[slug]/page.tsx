@@ -89,24 +89,24 @@ export default function PlayerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8 w-full max-w-full overflow-x-hidden">
+      <div className="max-w-6xl mx-auto space-y-6 w-full">
         {/* Header */}
-        <div className="bg-white rounded-md overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-900 to-orange-800 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-white text-3xl font-bold">
+        <div className="bg-white rounded-md overflow-hidden w-full">
+          <div className="bg-gradient-to-r from-blue-900 to-orange-800 p-4 md:p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-white text-2xl md:text-3xl font-bold break-words">
                   {data.player.name}
                 </h1>
-                <p className="text-gray-300 text-lg mt-1">
+                <p className="text-gray-300 text-base md:text-lg mt-1">
                   Rating: {Math.floor(data.player.rating)}
                   {data.player.rank && ` (#${data.player.rank})`}
                 </p>
               </div>
               <Link
                 href="/players"
-                className="text-white hover:text-gray-200 underline"
+                className="text-white hover:text-gray-200 underline text-sm md:text-base whitespace-nowrap"
               >
                 ← Back to Players
               </Link>
