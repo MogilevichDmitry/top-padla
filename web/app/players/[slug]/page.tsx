@@ -24,6 +24,12 @@ export default function PlayerPage() {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const matchesPerPage = 10;
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    rating: number;
+    date: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   if (isLoading) {
     return <Loading message="Loading player details..." />;
@@ -159,6 +165,297 @@ export default function PlayerPage() {
           </div>
         </div>
 
+        {/* Rating Summary */}
+        <div className="bg-white rounded-md p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Rating Summary
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <p className="text-gray-500 text-sm">Current Rating</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {Math.floor(data.progress.currentRating)}
+                {data.player.rank && ` (#${data.player.rank})`}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Peak Rating</p>
+              <p className="text-2xl font-bold text-green-600">
+                {Math.floor(data.progress.peakRating)}
+              </p>
+              {data.progress.peakDate && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatDate(data.progress.peakDate)}
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Min Rating</p>
+              <p className="text-2xl font-bold text-red-600">
+                {Math.floor(data.progress.minRating)}
+              </p>
+            </div>
+          </div>
+
+          {/* Rating Progress Chart */}
+          {data.progress.history &&
+            data.progress.history.length > 1 &&
+            (() => {
+              const history = data.progress.history;
+              const width = 800;
+              const height = 200;
+              const padding = { top: 20, right: 20, bottom: 30, left: 50 };
+              const chartWidth = width - padding.left - padding.right;
+              const chartHeight = height - padding.top - padding.bottom;
+
+              // Calculate min/max for scaling
+              const ratings = history.map((h) => h.rating);
+              const minRating = Math.min(...ratings);
+              const maxRating = Math.max(...ratings);
+              const ratingRange = maxRating - minRating || 100; // Avoid division by zero
+              const paddingRange = Math.max(ratingRange * 0.1, 20); // 10% padding, min 20 points
+              const yMin = minRating - paddingRange;
+              const yMax = maxRating + paddingRange;
+              const yRange = yMax - yMin;
+
+              // Generate points
+              // In SVG, y=0 is at top, so we need to invert: higher rating = higher on screen = lower y value
+              const points = history.map((point, index) => {
+                const x =
+                  history.length > 1
+                    ? (index / (history.length - 1)) * chartWidth
+                    : chartWidth / 2;
+                // Invert: (yMax - rating) / range gives us position from top
+                const y = ((yMax - point.rating) / yRange) * chartHeight;
+                return { x, y, rating: point.rating, date: point.date };
+              });
+
+              // Create path for line
+              const pathData = points
+                .map(
+                  (point, index) =>
+                    `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`
+                )
+                .join(" ");
+
+              // Create area path (line + bottom)
+              const areaPath = `${pathData} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`;
+
+              // Format date for x-axis
+              const formatChartDate = (dateString: string) => {
+                const date = new Date(dateString);
+                return date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                });
+              };
+
+              // Get x-axis labels (first, middle, last)
+              const xLabels = [
+                { index: 0, date: history[0].date },
+                {
+                  index: Math.floor(history.length / 2),
+                  date: history[Math.floor(history.length / 2)]?.date,
+                },
+                {
+                  index: history.length - 1,
+                  date: history[history.length - 1].date,
+                },
+              ].filter((label) => label.date);
+
+              return (
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Rating Progress
+                  </h3>
+                  <div className="overflow-x-auto -mx-6 px-6 relative">
+                    <svg
+                      width={width}
+                      height={height}
+                      className="w-full h-auto min-w-full"
+                      viewBox={`0 0 ${width} ${height}`}
+                      preserveAspectRatio="xMidYMid meet"
+                    >
+                      {/* Grid lines */}
+                      <g
+                        transform={`translate(${padding.left}, ${padding.top})`}
+                      >
+                        {/* Horizontal grid lines */}
+                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                          // ratio 0 = top (high rating), ratio 1 = bottom (low rating)
+                          const y = ratio * chartHeight;
+                          // Calculate value: ratio 0 = yMax, ratio 1 = yMin
+                          const value = yMax - ratio * yRange;
+                          return (
+                            <g key={ratio}>
+                              <line
+                                x1={0}
+                                y1={y}
+                                x2={chartWidth}
+                                y2={y}
+                                stroke="#e5e7eb"
+                                strokeWidth={1}
+                                strokeDasharray="2,2"
+                              />
+                              <text
+                                x={-5}
+                                y={y + 4}
+                                textAnchor="end"
+                                fontSize="10"
+                                fill="#6b7280"
+                              >
+                                {Math.floor(value)}
+                              </text>
+                            </g>
+                          );
+                        })}
+
+                        {/* Chart area (gradient fill) */}
+                        <defs>
+                          <linearGradient
+                            id="ratingGradient"
+                            x1="0%"
+                            y1="0%"
+                            x2="0%"
+                            y2="100%"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#3b82f6"
+                              stopOpacity="0.3"
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#3b82f6"
+                              stopOpacity="0.05"
+                            />
+                          </linearGradient>
+                        </defs>
+                        <path d={areaPath} fill="url(#ratingGradient)" />
+
+                        {/* Chart line */}
+                        <path
+                          d={pathData}
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+
+                        {/* Data points */}
+                        {points.map((point, index) => (
+                          <g key={index}>
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="4"
+                              fill="#3b82f6"
+                              className="cursor-pointer transition-all"
+                              onMouseEnter={(e) => {
+                                const svg = e.currentTarget.ownerSVGElement;
+                                if (svg) {
+                                  const svgRect = svg.getBoundingClientRect();
+                                  // Convert SVG viewBox coordinates to container pixel coordinates
+                                  const scaleX = svgRect.width / width;
+                                  const scaleY = svgRect.height / height;
+                                  const x = (point.x + padding.left) * scaleX;
+                                  const y = (point.y + padding.top) * scaleY;
+                                  setHoveredPoint({
+                                    rating: point.rating,
+                                    date: point.date,
+                                    x,
+                                    y,
+                                  });
+                                }
+                              }}
+                              onMouseLeave={() => setHoveredPoint(null)}
+                            />
+                            {/* Larger hover area for easier interaction */}
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="8"
+                              fill="transparent"
+                              className="cursor-pointer"
+                              onMouseEnter={(e) => {
+                                const svg = e.currentTarget.ownerSVGElement;
+                                if (svg) {
+                                  const svgRect = svg.getBoundingClientRect();
+                                  // Convert SVG viewBox coordinates to container pixel coordinates
+                                  const scaleX = svgRect.width / width;
+                                  const scaleY = svgRect.height / height;
+                                  const x = (point.x + padding.left) * scaleX;
+                                  const y = (point.y + padding.top) * scaleY;
+                                  setHoveredPoint({
+                                    rating: point.rating,
+                                    date: point.date,
+                                    x,
+                                    y,
+                                  });
+                                }
+                              }}
+                              onMouseLeave={() => setHoveredPoint(null)}
+                            />
+                          </g>
+                        ))}
+
+                        {/* X-axis labels */}
+                        {xLabels.map((label, idx) => {
+                          const x =
+                            (label.index / (history.length - 1 || 1)) *
+                            chartWidth;
+                          return (
+                            <text
+                              key={idx}
+                              x={x}
+                              y={chartHeight + 20}
+                              textAnchor="middle"
+                              fontSize="10"
+                              fill="#6b7280"
+                            >
+                              {formatChartDate(label.date)}
+                            </text>
+                          );
+                        })}
+                      </g>
+                    </svg>
+                    {/* Tooltip */}
+                    {hoveredPoint && (
+                      <div
+                        className="absolute bg-gray-900 text-white text-xs rounded-md px-2 py-1.5 shadow-lg pointer-events-none z-10 whitespace-nowrap"
+                        style={{
+                          left: `${hoveredPoint.x}px`,
+                          top: `${hoveredPoint.y}px`,
+                          transform: "translate(-50%, calc(-100% - 8px))",
+                        }}
+                      >
+                        <div className="font-semibold">
+                          Rating: {Math.floor(hoveredPoint.rating)}
+                        </div>
+                        {hoveredPoint.date &&
+                          hoveredPoint.date.trim() !== "" && (
+                            <div className="text-gray-300">
+                              {formatDate(hoveredPoint.date)}
+                            </div>
+                          )}
+                        {/* Arrow */}
+                        <div
+                          className="absolute left-1/2 top-full -translate-x-1/2"
+                          style={{
+                            borderLeft: "6px solid transparent",
+                            borderRight: "6px solid transparent",
+                            borderTop: "6px solid #111827",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+        </div>
+
         {/* Streaks */}
         <div className="bg-white rounded-md p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Streaks</h2>
@@ -209,39 +506,6 @@ export default function PlayerPage() {
                   {formatDate(data.streaks.worst_loss_date)}
                 </p>
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* Rating Summary */}
-        <div className="bg-white rounded-md p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Rating Summary
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-gray-500 text-sm">Current Rating</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {Math.floor(data.progress.currentRating)}
-                {data.player.rank && ` (#${data.player.rank})`}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Peak Rating</p>
-              <p className="text-2xl font-bold text-green-600">
-                {Math.floor(data.progress.peakRating)}
-              </p>
-              {data.progress.peakDate && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {formatDate(data.progress.peakDate)}
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Min Rating</p>
-              <p className="text-2xl font-bold text-red-600">
-                {Math.floor(data.progress.minRating)}
-              </p>
             </div>
           </div>
         </div>
