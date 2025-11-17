@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   description: "Padla rating system with modified Elo algorithm",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,9 +39,7 @@ export default function RootLayout({
         <QueryProvider>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 md:ml-64 pt-14 md:pt-0">
-              {children}
-            </main>
+            <main className="flex-1 md:ml-64 pt-14 md:pt-0">{children}</main>
           </div>
         </QueryProvider>
       </body>

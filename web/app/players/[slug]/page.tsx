@@ -166,7 +166,7 @@ export default function PlayerPage() {
         </div>
 
         {/* Rating Summary */}
-        <div className="bg-white rounded-md p-6">
+        <div className="bg-white rounded-md p-4 md:p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Rating Summary
           </h2>
@@ -264,15 +264,13 @@ export default function PlayerPage() {
               ].filter((label) => label.date);
 
               return (
-                <div className="mt-4">
+                <div className="mt-4 hidden md:block">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
                     Rating Progress
                   </h3>
-                  <div className="overflow-x-auto -mx-6 px-6 relative">
+                  <div className="w-full overflow-x-auto md:-mx-6 md:px-6 relative">
                     <svg
-                      width={width}
-                      height={height}
-                      className="w-full h-auto min-w-full"
+                      className="w-full h-auto block md:min-w-[800px]"
                       viewBox={`0 0 ${width} ${height}`}
                       preserveAspectRatio="xMidYMid meet"
                     >
