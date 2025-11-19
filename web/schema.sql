@@ -31,3 +31,27 @@ CREATE TABLE IF NOT EXISTS pairs (
 CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(date DESC);
 CREATE INDEX IF NOT EXISTS idx_pairs_rating ON pairs(rating DESC);
 
+-- Game sessions table for scheduling games
+CREATE TABLE IF NOT EXISTS game_sessions (
+  id SERIAL PRIMARY KEY,
+  date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME,
+  location VARCHAR(50) NOT NULL DEFAULT 'Padel Point' CHECK (location IN ('Padel Point', 'Zawady')),
+  created_by VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Game attendees table for tracking who's coming
+-- Note: We handle uniqueness case-insensitively in application code
+CREATE TABLE IF NOT EXISTS game_attendees (
+  id SERIAL PRIMARY KEY,
+  game_session_id INTEGER NOT NULL REFERENCES game_sessions(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'attending' CHECK (status IN ('attending', 'declined')),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_sessions_date ON game_sessions(date DESC, start_time);
+CREATE INDEX IF NOT EXISTS idx_game_attendees_session ON game_attendees(game_session_id);
+

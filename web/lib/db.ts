@@ -27,6 +27,25 @@ export interface Pair {
   losses: number;
 }
 
+export interface GameSession {
+  id: number;
+  date: string; // ISO date string (YYYY-MM-DD)
+  start_time: string; // HH:MM format
+  end_time: string | null; // HH:MM format or null
+  location: "Padel Point" | "Zawady";
+  created_by: string;
+  created_at: string;
+  attendees?: GameAttendee[];
+}
+
+export interface GameAttendee {
+  id: number;
+  game_session_id: number;
+  name: string;
+  status: "attending" | "declined";
+  created_at: string;
+}
+
 export async function getPlayers(): Promise<Player[]> {
   const { rows } = await sql<Player>`SELECT * FROM players ORDER BY name`;
   return rows;
@@ -241,4 +260,137 @@ export async function recomputePairsFromMatches(): Promise<void> {
     }, ${acc.matches}, ${acc.wins}, ${acc.losses})
     `;
   }
+}
+
+// Game Sessions functions
+export async function getGameSessions(): Promise<GameSession[]> {
+  const { rows: sessions } = await sql<GameSession>`
+    SELECT 
+      id,
+      date::text as date,
+      start_time::text as start_time,
+      end_time::text as end_time,
+      location,
+      created_by,
+      created_at::text as created_at
+    FROM game_sessions 
+    ORDER BY date ASC, start_time ASC
+  `;
+
+  // Get attendees for each session
+  const sessionsWithAttendees = await Promise.all(
+    sessions.map(async (session) => {
+      const { rows: attendees } = await sql<GameAttendee>`
+        SELECT 
+          id,
+          game_session_id,
+          name,
+          status,
+          created_at::text as created_at
+        FROM game_attendees 
+        WHERE game_session_id = ${session.id}
+        ORDER BY status DESC, created_at ASC
+      `;
+      return { ...session, attendees };
+    })
+  );
+
+  return sessionsWithAttendees;
+}
+
+export async function createGameSession(
+  date: string,
+  startTime: string,
+  endTime: string | null,
+  location: "Padel Point" | "Zawady",
+  createdBy: string
+): Promise<GameSession> {
+  let session: GameSession;
+
+  if (endTime) {
+    const { rows } = await sql<GameSession>`
+      INSERT INTO game_sessions (date, start_time, end_time, location, created_by)
+      VALUES (${date}::date, ${startTime}::time, ${endTime}::time, ${location}, ${createdBy})
+      RETURNING 
+        id,
+        date::text as date,
+        start_time::text as start_time,
+        end_time::text as end_time,
+        location,
+        created_by,
+        created_at::text as created_at
+    `;
+    session = rows[0];
+  } else {
+    const { rows } = await sql<GameSession>`
+      INSERT INTO game_sessions (date, start_time, end_time, location, created_by)
+      VALUES (${date}::date, ${startTime}::time, NULL, ${location}, ${createdBy})
+      RETURNING 
+        id,
+        date::text as date,
+        start_time::text as start_time,
+        end_time::text as end_time,
+        location,
+        created_by,
+        created_at::text as created_at
+    `;
+    session = rows[0];
+  }
+
+  // Automatically add creator as attendee
+  const creatorAttendee = await addGameAttendee(
+    session.id,
+    createdBy,
+    "attending"
+  );
+
+  return {
+    ...session,
+    attendees: [creatorAttendee],
+  };
+}
+
+export async function addGameAttendee(
+  gameSessionId: number,
+  name: string,
+  status: "attending" | "declined" = "attending"
+): Promise<GameAttendee> {
+  // Check if already exists
+  const existing = await sql<GameAttendee>`
+    SELECT * FROM game_attendees 
+    WHERE game_session_id = ${gameSessionId} AND LOWER(name) = LOWER(${name})
+    LIMIT 1
+  `;
+
+  if (existing.rows.length > 0) {
+    // Update status if changed
+    if (existing.rows[0].status !== status) {
+      const { rows } = await sql<GameAttendee>`
+        UPDATE game_attendees 
+        SET status = ${status}
+        WHERE game_session_id = ${gameSessionId} AND LOWER(name) = LOWER(${name})
+        RETURNING *
+      `;
+      return rows[0];
+    }
+    return existing.rows[0];
+  }
+
+  const { rows } = await sql<GameAttendee>`
+    INSERT INTO game_attendees (game_session_id, name, status)
+    VALUES (${gameSessionId}, ${name}, ${status})
+    RETURNING *
+  `;
+  return rows[0];
+}
+
+export async function removeGameAttendee(
+  gameSessionId: number,
+  name: string
+): Promise<boolean> {
+  const { rowCount } = await sql`
+    DELETE FROM game_attendees 
+    WHERE game_session_id = ${gameSessionId} AND LOWER(name) = LOWER(${name})
+  `;
+  return (rowCount ?? 0) > 0;
 }

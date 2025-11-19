@@ -4,9 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
+const gameSchedulingItem = {
+  href: "/schedule",
+  label: "🎾 Game Scheduling",
+  icon: "🎾",
+};
+
 const menuItems = [
   { href: "/", label: "🏆 Standings", icon: "🏆" },
-  { href: "/matches", label: "🎾 Matches", icon: "🎾" },
+  { href: "/matches", label: "📋 Matches", icon: "📋" },
   { href: "/players", label: "👤 Players", icon: "👤" },
   { href: "/pairs", label: "👯‍♂️ Pairs", icon: "👯‍♂️" },
   { href: "/records", label: "📈 Records", icon: "📈" },
@@ -83,89 +89,162 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile header with logo and burger */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-lg pl-4 pr-3 py-3 flex items-center justify-between">
-        <Link
-          href="/"
-          className="flex items-center space-x-2"
-          onClick={() => setIsOpen(false)}
-        >
-          <h1 className="text-lg font-bold">TOP PADLA</h1>
-        </Link>
-        {isAdmin ? (
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-lg pl-4 pr-3 py-3">
+        <div className="flex items-center justify-between gap-2">
           <Link
-            href="/manage"
-            className="ml-auto mr-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+            href="/"
+            className="flex items-center space-x-2"
             onClick={() => setIsOpen(false)}
           >
-            Manage
+            <h1 className="text-lg font-bold">TOP PADLA</h1>
           </Link>
-        ) : (
-          <button
-            onClick={handleLogin}
-            className="ml-auto mr-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-          >
-            Login
-          </button>
-        )}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-          aria-label="Toggle menu"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            {isOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+          <div className="flex items-center gap-2">
+            {/* Game Scheduling button in header */}
+            <Link
+              href={gameSchedulingItem.href}
+              onClick={() => setIsOpen(false)}
+              className={`
+                flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 border text-xs font-semibold whitespace-nowrap
+                ${
+                  pathname === gameSchedulingItem.href
+                    ? "bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg border-green-300/30"
+                    : "bg-gradient-to-br from-green-300/10 to-emerald-400/10 text-green-200 hover:from-green-300/20 hover:to-emerald-400/20 hover:text-green-100 border-green-300/15"
+                }
+              `}
+            >
+              <span className="text-sm">{gameSchedulingItem.icon}</span>
+              <span className="hidden xs:inline">Game</span>
+            </Link>
+            {isAdmin ? (
+              <Link
+                href="/manage"
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                onClick={() => setIsOpen(false)}
+              >
+                Manage
+              </Link>
             ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+              <button
+                onClick={handleLogin}
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+              >
+                Login
+              </button>
             )}
-          </svg>
-        </button>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {isOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Mobile menu - full width and height below header */}
       {isOpen && (
         <div className="md:hidden fixed top-14 left-0 right-0 bottom-0 z-40 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-lg overflow-y-auto">
           <div className="flex flex-col h-full">
-            <nav className="flex-1 p-4 space-y-2">
-              {menuItems.map((item) => {
-                const isActive = pathname === item.href;
+            <nav className="flex-1 p-4 space-y-3">
+              {/* Game Scheduling - Special styling, separate from other items */}
+              {(() => {
+                const isActive = pathname === gameSchedulingItem.href;
                 return (
                   <Link
-                    key={item.href}
-                    href={item.href}
+                    href={gameSchedulingItem.href}
                     onClick={() => setIsOpen(false)}
                     className={`
-                      flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
+                      block px-4 py-3 rounded-xl transition-all duration-200 mb-4 border
                       ${
                         isActive
-                          ? "bg-blue-900 text-white shadow-lg"
-                          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                          ? "bg-gradient-to-br from-green-900 to-emerald-500 text-white shadow-lg border-green-300/30"
+                          : "bg-gradient-to-br from-green-300/10 to-emerald-400/10 text-green-300 hover:from-green-300/20 hover:to-emerald-400/20 hover:text-green-100 border-green-300/15"
                       }
                     `}
                   >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="font-medium">
-                      {item.label.replace(/^[^\s]+\s/, "")}
-                    </span>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">
+                        {gameSchedulingItem.icon}
+                      </span>
+                      <span className="font-bold text-base">
+                        {gameSchedulingItem.label.replace(/^[^\s]+\s/, "")}
+                      </span>
+                    </div>
                   </Link>
                 );
-              })}
+              })()}
+
+              {/* Regular menu items */}
+              <div className="pt-2 space-y-1">
+                {menuItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`
+                        flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200
+                        ${
+                          isActive
+                            ? "bg-blue-900 text-white shadow-lg"
+                            : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                        }
+                      `}
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <span className="font-medium">
+                        {item.label.replace(/^[^\s]+\s/, "")}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
             </nav>
+
+            {/* Manage button - separated at bottom */}
+            {isAdmin && (
+              <div className="px-4 py-3 border-t border-gray-700">
+                <Link
+                  href="/manage"
+                  onClick={() => setIsOpen(false)}
+                  className={`
+                    flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 w-full
+                    ${
+                      pathname === "/manage"
+                        ? "bg-blue-900 text-white shadow-lg"
+                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }
+                  `}
+                >
+                  <span className="text-xl">⚙️</span>
+                  <span className="font-medium">Manage</span>
+                </Link>
+              </div>
+            )}
+
             <div className="p-4 border-t border-gray-700 mt-auto">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-400">BOTTOM PADLA</p>
@@ -211,48 +290,81 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+        <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
+          {/* Game Scheduling - Special styling, separate from other items */}
+          {(() => {
+            const isActive = pathname === gameSchedulingItem.href;
             return (
               <Link
-                key={item.href}
-                href={item.href}
+                href={gameSchedulingItem.href}
                 onClick={() => setIsOpen(false)}
                 className={`
-                  flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
+                  block px-4 py-3 rounded-xl transition-all duration-200 border mb-4
                   ${
                     isActive
-                      ? "bg-blue-900 text-white shadow-lg"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                      ? "bg-gradient-to-br from-green-800 to-emerald-700 text-white shadow-lg border-green-600/30"
+                      : "bg-gradient-to-br from-green-300/10 to-emerald-400/10 text-green-200 hover:from-green-300/20 hover:to-emerald-400/20 hover:text-green-100 border-green-300/15"
                   }
                 `}
               >
-                <span className="text-xl">{item.icon}</span>
-                <span className="font-medium">
-                  {item.label.replace(/^[^\s]+\s/, "")}
-                </span>
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">{gameSchedulingItem.icon}</span>
+                  <span className="font-bold text-base">
+                    {gameSchedulingItem.label.replace(/^[^\s]+\s/, "")}
+                  </span>
+                </div>
               </Link>
             );
-          })}
-          {isAdmin && (
+          })()}
+
+          {/* Regular menu items */}
+          <div className="pt-4 space-y-1">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`
+                    flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200
+                    ${
+                      isActive
+                        ? "bg-blue-900 text-white shadow-lg"
+                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }
+                  `}
+                >
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="font-medium">
+                    {item.label.replace(/^[^\s]+\s/, "")}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Manage button - separated at bottom */}
+        {isAdmin && (
+          <div className="px-4 py-3 border-t border-gray-700">
             <Link
               href="/manage"
               onClick={() => setIsOpen(false)}
               className={`
-                flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
-                ${
-                  pathname === "/manage"
-                    ? "bg-blue-900 text-white shadow-lg"
-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                }
-              `}
+                    flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 w-full
+                    ${
+                      pathname === "/manage"
+                        ? "bg-blue-900 text-white shadow-lg"
+                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }
+                  `}
             >
               <span className="text-xl">⚙️</span>
               <span className="font-medium">Manage</span>
             </Link>
-          )}
-        </nav>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-700">
