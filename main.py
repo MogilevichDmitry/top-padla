@@ -78,6 +78,10 @@ async def get_upcoming_games() -> List[Dict]:
                     today = warsaw_now.date()
                     five_days_later = today + timedelta(days=5)
                     
+                    print(f"🔍 Total games from API: {len(games)}")
+                    print(f"🔍 Today (Warsaw): {today}")
+                    print(f"🔍 Five days later: {five_days_later}")
+                    
                     upcoming_games = []
                     for game in games:
                         game_date_str = game.get('date')
@@ -88,10 +92,14 @@ async def get_upcoming_games() -> List[Dict]:
                         try:
                             game_date = datetime.strptime(game_date_str, "%Y-%m-%d").date()
                             
+                            print(f"🔍 Checking game: date={game_date}, location={game.get('location')}")
+                            
                             # Check if game is in the next 5 days and not in the past
                             if today <= game_date <= five_days_later:
+                                print(f"  ✅ Date in range")
                                 # Check if game hasn't passed yet (consider time)
                                 if game_date > today:
+                                    print(f"  ✅ Future game, adding")
                                     upcoming_games.append(game)
                                 elif game_date == today:
                                     # For today, check if game hasn't finished yet
@@ -128,12 +136,17 @@ async def get_upcoming_games() -> List[Dict]:
                                                 # If game started less than 2 hours ago, it might still be ongoing
                                                 if 0 < time_diff.total_seconds() <= 7200:  # 2 hours in seconds
                                                     upcoming_games.append(game)
-                                    except ValueError:
+                                    except ValueError as e:
                                         # If time parsing fails, skip the game for today
+                                        print(f"  ❌ Time parsing error for today's game: {e}")
                                         pass
-                        except ValueError:
+                            else:
+                                print(f"  ❌ Date not in range: {game_date} not in [{today}, {five_days_later}]")
+                        except ValueError as e:
+                            print(f"  ❌ Date parsing error: {e}")
                             continue
                     
+                    print(f"🔍 Total upcoming games: {len(upcoming_games)}")
                     return upcoming_games
                 else:
                     error_text = await response.text()
