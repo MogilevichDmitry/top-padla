@@ -622,48 +622,49 @@ export default function MatchesPage() {
 
                 {/* Previous Matches with Same Composition */}
                 {isExpanded && hasHistory && (
-                  <div className="border-t-2 border-blue-100 bg-linear-to-b from-blue-50 to-gray-50">
-                    <div className="px-4 py-4">
-                      {/* Overall Score Summary */}
-                      <div className="mb-4 p-3 bg-gray-100 rounded-lg">
-                        <div className="flex items-center justify-center gap-3 md:gap-4">
-                          <div className="text-center flex-1">
-                            <div className="text-xs md:text-sm font-medium text-gray-900 mb-1">
+                  <div className="border-t border-gray-100 bg-gray-50/50">
+                    <div className="px-4 py-6">
+                      {/* Head to Head Summary */}
+                      <div className="flex flex-col items-center mb-8">
+                        <div className="text-[12px] font-bold  text-gray-600 uppercase mb-4">
+                          Head to Head
+                        </div>
+                        <div className="flex items-end justify-center gap-6 sm:gap-12 w-full max-w-lg">
+                          {/* Team A */}
+                          <div className="flex-1 text-right">
+                            <div className="text-xs sm:text-sm font-medium text-gray-700 mb-1">
                               {match.team_a_names.join(" + ")}
                             </div>
                             <div
-                              className={`text-2xl md:text-3xl font-bold ${
+                              className={`text-3xl sm:text-4xl font-bold leading-none ${
                                 teamAWins > teamBWins
-                                  ? "text-green-600"
+                                  ? "text-gray-900"
                                   : teamAWins < teamBWins
                                   ? "text-gray-400"
-                                  : "text-gray-600"
+                                  : "text-gray-400"
                               }`}
                             >
                               {teamAWins}
                             </div>
                           </div>
 
-                          <div className="text-center px-2">
-                            <div className="text-base text-gray-600 mb-1">
-                              Total Score
-                            </div>
-                            <div className="text-xl md:text-2xl font-light text-gray-400">
-                              —
-                            </div>
+                          {/* Divider */}
+                          <div className="pb-2 text-gray-400 text-2xl font-light">
+                            —
                           </div>
 
-                          <div className="text-center flex-1">
-                            <div className="text-xs md:text-sm font-medium text-gray-900 mb-1">
+                          {/* Team B */}
+                          <div className="flex-1 text-left">
+                            <div className="text-xs sm:text-sm font-medium text-gray-700 mb-1">
                               {match.team_b_names.join(" + ")}
                             </div>
                             <div
-                              className={`text-2xl md:text-3xl font-bold ${
+                              className={`text-3xl sm:text-4xl font-bold leading-none ${
                                 teamBWins > teamAWins
-                                  ? "text-green-600"
+                                  ? "text-gray-900"
                                   : teamBWins < teamAWins
                                   ? "text-gray-400"
-                                  : "text-gray-600"
+                                  : "text-gray-400"
                               }`}
                             >
                               {teamBWins}
@@ -672,11 +673,17 @@ export default function MatchesPage() {
                         </div>
                       </div>
 
-                      <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-                        Previous Matches ({sameCompositionMatches.length})
+                      {/* Timeline Divider */}
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="h-px flex-1 bg-gray-300"></div>
+                        <span className="text-[12px] font-bold text-gray-600 uppercase tracking-wider">
+                          History ({sameCompositionMatches.length})
+                        </span>
+                        <div className="h-px flex-1 bg-gray-300"></div>
                       </div>
 
-                      <div className="space-y-2">
+                      {/* Matches List */}
+                      <div className="space-y-3">
                         {sameCompositionMatches.map((prevMatch) => {
                           const prevMatchWithNames = {
                             ...prevMatch,
@@ -694,129 +701,96 @@ export default function MatchesPage() {
                           const prevTeamAWon =
                             prevMatch.score_a > prevMatch.score_b;
 
+                          // Simple date formatter for the list
+                          const dateObj = new Date(prevMatch.date);
+                          const dateStr = dateObj.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                          const yearStr = dateObj.getFullYear();
+
                           return (
                             <div
                               key={prevMatch.id}
-                              className="bg-white rounded-md border border-gray-300 p-2.5 hover:border-blue-300 transition-colors"
+                              className="bg-white rounded-xl border border-gray-100 p-2.5 sm:p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
                             >
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-base">
-                                    {getMatchTypeEmoji(prevMatch.type)}
-                                  </span>
-                                  <span className="text-xs text-gray-500 font-medium">
-                                    {formatDate(prevMatch.date)}
-                                  </span>
-                                </div>
+                              {/* Date & Type Header */}
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm">
+                                  {getMatchTypeEmoji(prevMatch.type)}
+                                </span>
+                                <span className="text-xs font-medium text-gray-700">
+                                  {dateStr}, {yearStr}
+                                </span>
                               </div>
-                              <div className="flex items-center justify-between gap-3 md:gap-4">
+
+                              {/* Match Details */}
+                              <div className="flex items-center justify-between gap-2">
                                 {/* Team A */}
                                 <div
-                                  className={`flex-1 text-right text-sm ${
+                                  className={`flex-1 text-right text-sm flex flex-col justify-center ${
                                     prevTeamAWon
-                                      ? "font-semibold text-gray-900"
-                                      : "text-gray-600"
+                                      ? "text-gray-900 font-semibold"
+                                      : "text-gray-500 font-normal"
                                   }`}
                                 >
-                                  <div className="space-y-0.5">
-                                    {prevMatchWithNames.team_a_names.map(
-                                      (name, idx) => {
-                                        const playerId = prevMatch.team_a[idx];
-                                        const rank =
-                                          playerRankMap.get(playerId);
-                                        return (
-                                          <div
-                                            key={idx}
-                                            className="flex items-center justify-end gap-1 text-sm"
-                                          >
-                                            <Link
-                                              href={`/players/${nameToSlug(
-                                                name
-                                              )}`}
-                                              className="hover:text-blue-600 transition-colors"
-                                              onClick={(e) =>
-                                                e.stopPropagation()
-                                              }
-                                            >
-                                              {name}
-                                            </Link>
-                                            {rank && (
-                                              <span className="text-xs text-gray-500 font-normal">
-                                                #{rank}
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      }
-                                    )}
-                                  </div>
+                                  {prevMatchWithNames.team_a_names.map(
+                                    (name, i) => (
+                                      <div
+                                        key={i}
+                                        className="leading-tight my-0.5"
+                                      >
+                                        {name}
+                                      </div>
+                                    )
+                                  )}
                                 </div>
 
                                 {/* Score */}
-                                <div className="flex items-center gap-1.5 shrink-0 px-2 py-1 bg-gray-50 rounded-md">
-                                  <div
-                                    className={`text-lg md:text-xl font-bold min-w-[20px] text-center ${
-                                      prevTeamAWon
-                                        ? "text-green-600"
-                                        : "text-gray-400"
-                                    }`}
-                                  >
-                                    {prevMatch.score_a}
-                                  </div>
-                                  <div className="text-gray-400 text-sm font-medium">
-                                    —
-                                  </div>
-                                  <div
-                                    className={`text-lg md:text-xl font-bold min-w-[20px] text-center ${
-                                      !prevTeamAWon
-                                        ? "text-green-600"
-                                        : "text-gray-400"
-                                    }`}
-                                  >
-                                    {prevMatch.score_b}
+                                <div className="flex items-center justify-center px-2 sm:px-4">
+                                  <div className="flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100 min-w-[80px] justify-center">
+                                    <span
+                                      className={`text-lg sm:text-xl font-bold ${
+                                        prevTeamAWon
+                                          ? "text-gray-900"
+                                          : "text-gray-400"
+                                      }`}
+                                    >
+                                      {prevMatch.score_a}
+                                    </span>
+                                    <span className="text-gray-400 text-sm font-light">
+                                      -
+                                    </span>
+                                    <span
+                                      className={`text-lg sm:text-xl font-bold ${
+                                        !prevTeamAWon
+                                          ? "text-gray-900"
+                                          : "text-gray-400"
+                                      }`}
+                                    >
+                                      {prevMatch.score_b}
+                                    </span>
                                   </div>
                                 </div>
 
                                 {/* Team B */}
                                 <div
-                                  className={`flex-1 text-left text-sm ${
+                                  className={`flex-1 text-left text-sm flex flex-col justify-center ${
                                     !prevTeamAWon
-                                      ? "font-semibold text-gray-900"
-                                      : "text-gray-600"
+                                      ? "text-gray-900 font-semibold"
+                                      : "text-gray-400 font-normal"
                                   }`}
                                 >
-                                  <div className="space-y-0.5">
-                                    {prevMatchWithNames.team_b_names.map(
-                                      (name, idx) => {
-                                        const playerId = prevMatch.team_b[idx];
-                                        const rank =
-                                          playerRankMap.get(playerId);
-                                        return (
-                                          <div
-                                            key={idx}
-                                            className="flex items-center justify-start gap-1 text-sm"
-                                          >
-                                            <Link
-                                              href={`/players/${nameToSlug(
-                                                name
-                                              )}`}
-                                              className="hover:text-blue-600 transition-colors"
-                                              onClick={(e) =>
-                                                e.stopPropagation()
-                                              }
-                                            >
-                                              {name}
-                                            </Link>
-                                            {rank && (
-                                              <span className="text-xs text-gray-500 font-normal">
-                                                #{rank}
-                                              </span>
-                                            )}
-                                          </div>
-                                        );
-                                      }
-                                    )}
-                                  </div>
+                                  {prevMatchWithNames.team_b_names.map(
+                                    (name, i) => (
+                                      <div
+                                        key={i}
+                                        className="leading-tight my-0.5"
+                                      >
+                                        {name}
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             </div>
