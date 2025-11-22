@@ -6,6 +6,7 @@ import Loading from "@/components/Loading";
 import CreateGameModal from "@/components/CreateGameModal";
 import AttendGameModal from "@/components/AttendGameModal";
 import { GameSession } from "@/lib/db";
+import { saveGameAttendanceCookie, canRemoveAttendee } from "@/lib/utils";
 
 function formatDateWithDay(dateString: string): string {
   const date = new Date(dateString + "T00:00:00");
@@ -81,6 +82,17 @@ async function removeAttendee(gameId: number, name: string) {
   return res.json();
 }
 
+async function deleteGame(gameId: number) {
+  const res = await fetch(`/api/games/${gameId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Failed to delete game");
+  }
+  return res.json();
+}
+
 export default function GamesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -88,6 +100,8 @@ export default function GamesPage() {
   const [attendeeName, setAttendeeName] = useState("");
   const [showAttendModal, setShowAttendModal] = useState(false);
   const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [gameToDelete, setGameToDelete] = useState<GameSession | null>(null);
   const [attendStatus, setAttendStatus] = useState<"attending" | "declined">(
     "attending"
   );
@@ -135,7 +149,9 @@ export default function GamesPage() {
       name: string;
       status: "attending" | "declined";
     }) => attendGame(gameId, name, status),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Save to cookies: gameId and name, expires in 7 days
+      saveGameAttendanceCookie(variables.gameId, variables.name, 7);
       queryClient.invalidateQueries({ queryKey: ["games"] });
       setShowAttendModal(false);
       setShowDeclineModal(false);
@@ -149,6 +165,15 @@ export default function GamesPage() {
       removeAttendee(gameId, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["games"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (gameId: number) => deleteGame(gameId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      setShowDeleteModal(false);
+      setGameToDelete(null);
     },
   });
 
@@ -181,6 +206,17 @@ export default function GamesPage() {
   const handleRemoveAttendee = (game: GameSession, name: string) => {
     if (confirm(`Remove ${name} from the list?`)) {
       removeMutation.mutate({ gameId: game.id, name });
+    }
+  };
+
+  const handleDeleteGame = (game: GameSession) => {
+    setGameToDelete(game);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (gameToDelete) {
+      deleteMutation.mutate(gameToDelete.id);
     }
   };
 
@@ -241,10 +277,19 @@ export default function GamesPage() {
   };
 
   const upcomingGames = games.filter((game) => !isGamePast(game));
-  // Show only past games from the last week
-  const pastGames = games.filter(
-    (game) => isGamePast(game) && game.date >= oneWeekAgoDate
-  );
+  // Show only past games from the last week, sorted by most recent first
+  const pastGames = games
+    .filter((game) => isGamePast(game) && game.date >= oneWeekAgoDate)
+    .sort((a, b) => {
+      // Sort by date (descending - most recent first)
+      if (a.date !== b.date) {
+        return b.date.localeCompare(a.date);
+      }
+      // If same date, sort by time (descending - most recent first)
+      const timeA = a.end_time || a.start_time;
+      const timeB = b.end_time || b.start_time;
+      return timeB.localeCompare(timeA);
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-3 px-3 md:py-12 md:px-8 pt-16 md:pt-4">
@@ -293,7 +338,9 @@ export default function GamesPage() {
                   onAttendClick={handleAttendClick}
                   onDeclineClick={handleDeclineClick}
                   onRemoveAttendee={handleRemoveAttendee}
+                  onDeleteGame={isAdmin ? handleDeleteGame : undefined}
                   isAdmin={isAdmin}
+                  canRemoveAttendee={canRemoveAttendee}
                 />
               ))}
             </div>
@@ -313,8 +360,10 @@ export default function GamesPage() {
                   onAttendClick={handleAttendClick}
                   onDeclineClick={handleDeclineClick}
                   onRemoveAttendee={handleRemoveAttendee}
+                  onDeleteGame={isAdmin ? handleDeleteGame : undefined}
                   isPast={true}
                   isAdmin={isAdmin}
+                  canRemoveAttendee={canRemoveAttendee}
                 />
               ))}
             </div>
@@ -360,6 +409,59 @@ export default function GamesPage() {
           buttonText="Pass"
           buttonColor="gray"
         />
+
+        {/* Delete Game Confirmation Modal */}
+        {showDeleteModal && gameToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Delete Game
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to delete this game?
+                  <br />
+                  <span className="font-semibold text-gray-900">
+                    {formatDateWithDay(gameToDelete.date)} at{" "}
+                    {formatTime(gameToDelete.start_time)}
+                  </span>
+                  <br />
+                  <span className="text-sm text-gray-500">
+                    Location: {gameToDelete.location}
+                  </span>
+                </p>
+                {deleteMutation.error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-red-600">
+                      {deleteMutation.error.message}
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setGameToDelete(null);
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    disabled={deleteMutation.isPending}
+                    className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deleteMutation.isPending ? "Deleting..." : "Delete Game"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -370,15 +472,23 @@ function GameCard({
   onAttendClick,
   onDeclineClick,
   onRemoveAttendee,
+  onDeleteGame,
   isPast = false,
   isAdmin = false,
+  canRemoveAttendee: canRemove,
 }: {
   game: GameSession;
   onAttendClick: (game: GameSession) => void;
   onDeclineClick: (game: GameSession) => void;
   onRemoveAttendee: (game: GameSession, name: string) => void;
+  onDeleteGame?: (game: GameSession) => void;
   isPast?: boolean;
   isAdmin?: boolean;
+  canRemoveAttendee: (
+    gameId: number,
+    attendeeName: string,
+    isAdmin: boolean
+  ) => boolean;
 }) {
   const allAttendees = game.attendees || [];
   const attendees = allAttendees.filter((a) => a.status === "attending");
@@ -395,10 +505,32 @@ function GameCard({
         <div className="flex-1">
           <div className="flex items-center gap-2 md:gap-3 mb-2">
             <span className="text-xl md:text-2xl">{locationEmoji}</span>
-            <div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-900">
-                {formatDateWithDay(game.date)}
-              </h3>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg md:text-xl font-bold text-gray-900">
+                  {formatDateWithDay(game.date)}
+                </h3>
+                {isAdmin && onDeleteGame && (
+                  <button
+                    onClick={() => onDeleteGame(game)}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                    title="Delete game"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <p className="text-sm md:text-base text-gray-600">
                 {formatTime(game.start_time)}
                 {game.end_time && ` - ${formatTime(game.end_time)}`}
@@ -467,25 +599,26 @@ function GameCard({
                         {attendee.name}
                       </span>
 
-                      {!isPast && isAdmin && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveAttendee(game, attendee.name);
-                          }}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-white text-red-500 rounded-full shadow-md border border-red-100 opacity-100 md:opacity-0 md:group-hover/badge:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-50 hover:border-red-200"
-                          title="Remove"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="w-3 h-3"
+                      {!isPast &&
+                        canRemove(game.id, attendee.name, isAdmin) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveAttendee(game, attendee.name);
+                            }}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-white text-red-500 rounded-full shadow-md border border-red-100 opacity-100 md:opacity-0 md:group-hover/badge:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-50 hover:border-red-200"
+                            title="Remove"
                           >
-                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                          </svg>
-                        </button>
-                      )}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="w-3 h-3"
+                            >
+                              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                            </svg>
+                          </button>
+                        )}
                     </div>
                   );
                 })}
@@ -514,25 +647,26 @@ function GameCard({
                         {attendee.name}
                       </span>
 
-                      {!isPast && isAdmin && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveAttendee(game, attendee.name);
-                          }}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-white text-gray-400 rounded-full shadow-md border border-gray-200 opacity-100 md:opacity-0 md:group-hover/badge:opacity-100 transition-opacity flex items-center justify-center hover:text-red-500 hover:bg-red-50 hover:border-red-200"
-                          title="Remove"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="w-3 h-3"
+                      {!isPast &&
+                        canRemove(game.id, attendee.name, isAdmin) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveAttendee(game, attendee.name);
+                            }}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-white text-gray-400 rounded-full shadow-md border border-gray-200 opacity-100 md:opacity-0 md:group-hover/badge:opacity-100 transition-opacity flex items-center justify-center hover:text-red-500 hover:bg-red-50 hover:border-red-200"
+                            title="Remove"
                           >
-                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                          </svg>
-                        </button>
-                      )}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="w-3 h-3"
+                            >
+                              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                            </svg>
+                          </button>
+                        )}
                     </div>
                   );
                 })}

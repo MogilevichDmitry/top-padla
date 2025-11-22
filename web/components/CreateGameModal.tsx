@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { saveGameAttendanceCookie } from "@/lib/utils";
 
 interface CreateGameModalProps {
   isOpen: boolean;
@@ -91,6 +92,11 @@ export default function CreateGameModal({
     mutationFn: createGame,
     onSuccess: (data) => {
       console.log("Game created successfully:", data);
+      // Save to cookies: gameId and creator name, expires in 7 days
+      // Use created_by from response to ensure consistency
+      if (data?.id && data?.created_by) {
+        saveGameAttendanceCookie(data.id, data.created_by, 7);
+      }
       onSuccess();
       // Reset form
       setDate("");

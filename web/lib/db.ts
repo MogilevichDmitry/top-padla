@@ -170,7 +170,9 @@ export async function recomputePairsFromMatches(): Promise<void> {
     SELECT * FROM matches ORDER BY date ASC, id ASC
   `;
 
-  console.log(`[recomputePairsFromMatches] Processing ${matches.length} matches`);
+  console.log(
+    `[recomputePairsFromMatches] Processing ${matches.length} matches`
+  );
 
   type PairKey = string; // "minId-maxId"
   interface Accum {
@@ -253,7 +255,9 @@ export async function recomputePairsFromMatches(): Promise<void> {
   }
 
   console.log(
-    `[recomputePairsFromMatches] Processed ${processedMatches} valid matches, created ${Object.keys(pairs).length} pairs`
+    `[recomputePairsFromMatches] Processed ${processedMatches} valid matches, created ${
+      Object.keys(pairs).length
+    } pairs`
   );
 
   // Replace pairs table content with new aggregated data
@@ -269,7 +273,11 @@ export async function recomputePairsFromMatches(): Promise<void> {
     `;
   }
 
-  console.log(`[recomputePairsFromMatches] Inserted ${Object.keys(pairs).length} pairs into database`);
+  console.log(
+    `[recomputePairsFromMatches] Inserted ${
+      Object.keys(pairs).length
+    } pairs into database`
+  );
 }
 
 // Game Sessions functions
@@ -401,6 +409,17 @@ export async function removeGameAttendee(
   const { rowCount } = await sql`
     DELETE FROM game_attendees 
     WHERE game_session_id = ${gameSessionId} AND LOWER(name) = LOWER(${name})
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function deleteGameSession(
+  gameSessionId: number
+): Promise<boolean> {
+  // Delete game session (CASCADE will delete all attendees)
+  const { rowCount } = await sql`
+    DELETE FROM game_sessions 
+    WHERE id = ${gameSessionId}
   `;
   return (rowCount ?? 0) > 0;
 }
