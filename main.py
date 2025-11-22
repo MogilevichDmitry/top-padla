@@ -49,7 +49,7 @@ async def get_day_summary() -> Dict:
             async with session.get(f"{WEB_API_URL}/api/day-summary") as response:
                 if response.status == 200:
                     return await response.json()
-                else:
+            else:
                     error_text = await response.text()
                     raise Exception(f"API error {response.status}: {error_text}")
         except aiohttp.ClientError as e:
@@ -123,24 +123,25 @@ async def get_upcoming_games() -> List[Dict]:
                                             # Game is upcoming if current time is before end_time
                                             if current_time < end_time:
                                                 upcoming_games.append(game)
-                                        else:
+        else:
                                             # If no end_time, check if start_time hasn't passed
                                             # or if it's within 2 hours (game still ongoing)
                                             if start_time >= current_time:
                                                 upcoming_games.append(game)
-                                            else:
+        else:
                                                 # Check if game might still be ongoing (started less than 2 hours ago)
                                                 start_datetime = datetime.combine(today, start_time)
-                                                current_datetime = warsaw_now
-                                                time_diff = current_datetime - start_datetime
+                                                # Add timezone to start_datetime to match warsaw_now
+                                                start_datetime = start_datetime.replace(tzinfo=warsaw_tz)
+                                                time_diff = warsaw_now - start_datetime
                                                 # If game started less than 2 hours ago, it might still be ongoing
                                                 if 0 < time_diff.total_seconds() <= 7200:  # 2 hours in seconds
                                                     upcoming_games.append(game)
-                                    except ValueError as e:
+                                    except Exception as e:
                                         # If time parsing fails, skip the game for today
-                                        print(f"  ❌ Time parsing error for today's game: {e}")
+                                        print(f"  ❌ Error processing today's game: {e}")
                                         pass
-                            else:
+        else:
                                 print(f"  ❌ Date not in range: {game_date} not in [{today}, {five_days_later}]")
                         except ValueError as e:
                             print(f"  ❌ Date parsing error: {e}")
@@ -210,8 +211,8 @@ async def day_summary_cmd(m: Message):
                     footer += (
                         f"\n💡 <i>Присоединиться: "
                         f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
-                    )
-                else:
+            )
+        else:
                     footer = (
                         f"💡 <i>Предложить игру: "
                         f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
@@ -232,8 +233,8 @@ async def day_summary_cmd(m: Message):
                 reply_markup=ReplyKeyboardRemove(),
                 disable_web_page_preview=True
             )
-            return
-        
+        return
+    
         # Format message with aligned columns and better styling
         header = f"📅 <b>Итоги дня ({today_str})</b>\n"
         subtitle = f"<b>Сегодня играли:</b>\n\n"
@@ -256,7 +257,7 @@ async def day_summary_cmd(m: Message):
             elif change < 0:
                 change_str = f"{change:.1f}"
                 change_emoji = "🔴"
-            else:
+        else:
                 change_str = "0.0"
                 change_emoji = "⚪"
             
@@ -267,7 +268,7 @@ async def day_summary_cmd(m: Message):
             change_with_pts = f"{change_str} pts"
             
             # Create aligned line - all numbers will be at same position
-            line = (
+        line = (
                 f"<code>{i}. {name_padded}  {matches_str:>8}  "
                 f"{change_emoji} {change_with_pts:>10}</code>"
             )
@@ -307,8 +308,8 @@ async def day_summary_cmd(m: Message):
                 message += (
                     f"\n💡 <i>Присоединиться: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
-                )
-            else:
+            )
+        else:
                 message += (
                     f"\n\n💡 <i>Предложить игру: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
@@ -321,9 +322,9 @@ async def day_summary_cmd(m: Message):
                 f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
             )
         
-        await m.answer(
+            await m.answer(
             message,
-            parse_mode="HTML",
+                parse_mode="HTML",
             reply_markup=ReplyKeyboardRemove(),
             disable_web_page_preview=True
         )
