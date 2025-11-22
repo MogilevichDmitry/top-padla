@@ -142,24 +142,40 @@ async def day_summary_cmd(m: Message):
             try:
                 upcoming_games = await get_upcoming_games()
                 if upcoming_games:
-                    footer = (
-                        f"💡 <i>Вы можете присоединиться к игре или предложить новую игру "
-                        f"по ссылке: <a href=\"https://www.qwerty123.eu/schedule\">"
-                        f"https://www.qwerty123.eu/schedule</a></i>"
+                    footer = f"🎾 <b>Предстоящие игры (ближайшие 5 дней):</b>\n"
+                    for game in upcoming_games[:5]:  # Show max 5 games
+                        game_date = game.get('date', '')
+                        start_time = game.get('start_time', '')
+                        location = game.get('location', '')
+                        attendees = game.get('attendees', [])
+                        attendees_count = len(attendees)
+                        
+                        # Format date nicely
+                        try:
+                            date_obj = datetime.strptime(game_date, "%Y-%m-%d")
+                            date_formatted = date_obj.strftime("%d.%m")
+                        except:
+                            date_formatted = game_date
+                        
+                        footer += (
+                            f"• <b>{date_formatted}</b> в {start_time} - {location} "
+                            f"({attendees_count} игроков)\n"
+                        )
+                    footer += (
+                        f"\n💡 <i>Присоединиться: "
+                        f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                     )
                 else:
                     footer = (
-                        f"💡 <i>Вы можете предложить игру по ссылке: "
-                        f"<a href=\"https://www.qwerty123.eu/schedule\">"
-                        f"https://www.qwerty123.eu/schedule</a></i>"
+                        f"💡 <i>Предложить игру: "
+                        f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                     )
             except Exception as e:
                 # If we can't get games, still show the basic link
                 print(f"Error getting upcoming games: {e}")
                 footer = (
-                    f"💡 <i>Вы можете предложить игру по ссылке: "
-                    f"<a href=\"https://www.qwerty123.eu/schedule\">"
-                    f"https://www.qwerty123.eu/schedule</a></i>"
+                    f"💡 <i>Предложить игру: "
+                    f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                 )
             
             await m.answer(
@@ -217,24 +233,40 @@ async def day_summary_cmd(m: Message):
         try:
             upcoming_games = await get_upcoming_games()
             if upcoming_games:
+                message += f"\n\n🎾 <b>Предстоящие игры (ближайшие 5 дней):</b>\n"
+                for game in upcoming_games[:5]:  # Show max 5 games
+                    game_date = game.get('date', '')
+                    start_time = game.get('start_time', '')
+                    location = game.get('location', '')
+                    attendees = game.get('attendees', [])
+                    attendees_count = len(attendees)
+                    
+                    # Format date nicely
+                    try:
+                        date_obj = datetime.strptime(game_date, "%Y-%m-%d")
+                        date_formatted = date_obj.strftime("%d.%m")
+                    except:
+                        date_formatted = game_date
+                    
+                    message += (
+                        f"• <b>{date_formatted}</b> в {start_time} - {location} "
+                        f"({attendees_count} игроков)\n"
+                    )
                 message += (
-                    f"\n\n💡 <i>Вы можете присоединиться к игре или предложить новую игру "
-                    f"по ссылке: <a href=\"https://www.qwerty123.eu/schedule\">"
-                    f"https://www.qwerty123.eu/schedule</a></i>"
+                    f"\n💡 <i>Присоединиться: "
+                    f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                 )
             else:
                 message += (
-                    f"\n\n💡 <i>Вы можете предложить игру по ссылке: "
-                    f"<a href=\"https://www.qwerty123.eu/schedule\">"
-                    f"https://www.qwerty123.eu/schedule</a></i>"
+                    f"\n\n💡 <i>Предложить игру: "
+                    f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                 )
         except Exception as e:
             # If we can't get games, still show the basic link
             print(f"Error getting upcoming games: {e}")
             message += (
-                f"\n\n💡 <i>Вы можете предложить игру по ссылке: "
-                f"<a href=\"https://www.qwerty123.eu/schedule\">"
-                f"https://www.qwerty123.eu/schedule</a></i>"
+                f"\n\n💡 <i>Предложить игру: "
+                f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
             )
         
         await m.answer(
