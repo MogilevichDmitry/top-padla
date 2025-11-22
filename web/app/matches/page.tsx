@@ -377,51 +377,6 @@ export default function MatchesPage() {
                     <span className="text-base">
                       {getMatchTypeEmoji(match.type)}
                     </span>
-                    {(hasHistory || isLoadingPrevious) && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleMatchExpansion(match.id);
-                        }}
-                        disabled={isLoadingPrevious}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-wait"
-                        aria-label={
-                          isExpanded
-                            ? "Collapse match history"
-                            : "Expand match history"
-                        }
-                        title={
-                          isExpanded
-                            ? "Hide previous matches"
-                            : "Show previous matches"
-                        }
-                      >
-                        (
-                        {isLoadingPrevious
-                          ? "..."
-                          : previousCount !== undefined
-                          ? previousCount
-                          : sameCompositionMatches.length}{" "}
-                        previous)
-                        <svg
-                          className={`h-4 w-4 transition-transform ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 font-medium">
@@ -487,10 +442,10 @@ export default function MatchesPage() {
 
                 {/* Match Content */}
                 <div className="p-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex flex-row items-center justify-between gap-2 md:gap-4">
                     {/* Team A */}
                     <div
-                      className={`flex-1 text-center md:text-right md:pr-4 ${
+                      className={`flex-1 text-left md:text-right md:pr-4 ${
                         teamAWon
                           ? "font-semibold text-gray-900"
                           : "text-gray-600"
@@ -506,7 +461,7 @@ export default function MatchesPage() {
                           return (
                             <div
                               key={idx}
-                              className={`flex items-center justify-end md:justify-end gap-1 text-sm md:text-base ${
+                              className={`flex items-center justify-start md:justify-end gap-1 text-sm md:text-sm lg:text-base ${
                                 teamAWon ? "text-gray-900" : "text-gray-600"
                               }`}
                             >
@@ -540,20 +495,20 @@ export default function MatchesPage() {
                     </div>
 
                     {/* Score */}
-                    <div className="flex items-center justify-center md:shrink-0 md:px-6">
-                      <div className="flex items-center gap-2 md:gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-center shrink-0 px-2 md:px-6">
+                      <div className="flex items-center gap-1 md:gap-3 px-2 md:px-3 py-1 md:py-2 bg-gray-50 rounded-lg">
                         <div
-                          className={`text-3xl md:text-4xl font-bold min-w-[32px] text-center ${
+                          className={`text-xl md:text-3xl lg:text-4xl font-bold min-w-[24px] md:min-w-[32px] text-center ${
                             teamAWon ? "text-green-600" : "text-gray-400"
                           }`}
                         >
                           {match.score_a}
                         </div>
-                        <div className="text-gray-400 text-xl font-medium">
+                        <div className="text-gray-400 text-lg md:text-xl font-medium">
                           —
                         </div>
                         <div
-                          className={`text-3xl md:text-4xl font-bold min-w-[32px] text-center ${
+                          className={`text-xl md:text-3xl lg:text-4xl font-bold min-w-[24px] md:min-w-[32px] text-center ${
                             !teamAWon ? "text-green-600" : "text-gray-400"
                           }`}
                         >
@@ -564,7 +519,7 @@ export default function MatchesPage() {
 
                     {/* Team B */}
                     <div
-                      className={`flex-1 text-center md:text-left md:pl-4 ${
+                      className={`flex-1 text-right md:text-left md:pl-4 ${
                         !teamAWon
                           ? "font-semibold text-gray-900"
                           : "text-gray-600"
@@ -580,7 +535,7 @@ export default function MatchesPage() {
                           return (
                             <div
                               key={idx}
-                              className={`flex items-center justify-start gap-1 text-sm md:text-base ${
+                              className={`flex items-center justify-end md:justify-start gap-1 text-sm md:text-sm lg:text-base ${
                                 !teamAWon ? "text-gray-900" : "text-gray-600"
                               }`}
                             >
@@ -614,6 +569,56 @@ export default function MatchesPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Previous matches button */}
+                {(hasHistory || isLoadingPrevious) && (
+                  <div className="px-4 pb-3 pt-2 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMatchExpansion(match.id);
+                      }}
+                      disabled={isLoadingPrevious}
+                      className="flex items-center justify-center gap-2 w-full text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-wait"
+                      aria-label={
+                        isExpanded
+                          ? "Collapse match history"
+                          : "Expand match history"
+                      }
+                      title={
+                        isExpanded
+                          ? "Hide previous matches"
+                          : "Show previous matches"
+                      }
+                    >
+                      <span>
+                        {isLoadingPrevious
+                          ? "..."
+                          : previousCount !== undefined
+                          ? previousCount
+                          : sameCompositionMatches.length}{" "}
+                        previous
+                      </span>
+                      <svg
+                        className={`h-4 w-4 transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
 
                 {/* Previous Matches with Same Composition */}
                 {isExpanded && hasHistory && (
@@ -722,7 +727,7 @@ export default function MatchesPage() {
                                         return (
                                           <div
                                             key={idx}
-                                            className="flex items-center justify-end gap-1"
+                                            className="flex items-center justify-end gap-1 text-sm"
                                           >
                                             <Link
                                               href={`/players/${nameToSlug(
@@ -789,7 +794,7 @@ export default function MatchesPage() {
                                         return (
                                           <div
                                             key={idx}
-                                            className="flex items-center justify-start gap-1"
+                                            className="flex items-center justify-start gap-1 text-sm"
                                           >
                                             <Link
                                               href={`/players/${nameToSlug(
