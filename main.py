@@ -94,16 +94,43 @@ async def get_upcoming_games() -> List[Dict]:
                                 if game_date > today:
                                     upcoming_games.append(game)
                                 elif game_date == today:
-                                    # For today, check if time hasn't passed
+                                    # For today, check if game hasn't finished yet
                                     start_time_str = game.get('start_time', '00:00')
+                                    end_time_str = game.get('end_time')
+                                    
                                     try:
-                                        game_time = datetime.strptime(start_time_str, "%H:%M").time()
+                                        # Remove seconds if present (HH:MM:SS -> HH:MM)
+                                        if ':' in start_time_str and len(start_time_str) > 5:
+                                            start_time_str = start_time_str[:5]
+                                        
+                                        start_time = datetime.strptime(start_time_str, "%H:%M").time()
                                         current_time = warsaw_now.time()
-                                        if game_time >= current_time:
-                                            upcoming_games.append(game)
+                                        
+                                        # Check end_time if available, otherwise assume game lasts 2 hours
+                                        if end_time_str:
+                                            # Remove seconds if present
+                                            if ':' in end_time_str and len(end_time_str) > 5:
+                                                end_time_str = end_time_str[:5]
+                                            end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                                            # Game is upcoming if current time is before end_time
+                                            if current_time < end_time:
+                                                upcoming_games.append(game)
+                                        else:
+                                            # If no end_time, check if start_time hasn't passed
+                                            # or if it's within 2 hours (game still ongoing)
+                                            if start_time >= current_time:
+                                                upcoming_games.append(game)
+                                            else:
+                                                # Check if game might still be ongoing (started less than 2 hours ago)
+                                                start_datetime = datetime.combine(today, start_time)
+                                                current_datetime = warsaw_now
+                                                time_diff = current_datetime - start_datetime
+                                                # If game started less than 2 hours ago, it might still be ongoing
+                                                if 0 < time_diff.total_seconds() <= 7200:  # 2 hours in seconds
+                                                    upcoming_games.append(game)
                                     except ValueError:
-                                        # If time parsing fails, include the game
-                                        upcoming_games.append(game)
+                                        # If time parsing fails, skip the game for today
+                                        pass
                         except ValueError:
                             continue
                     
@@ -145,7 +172,7 @@ async def day_summary_cmd(m: Message):
                     footer = f"🎾 <b>Предстоящие игры (ближайшие 5 дней):</b>\n"
                     for game in upcoming_games[:5]:  # Show max 5 games
                         game_date = game.get('date', '')
-                        start_time = game.get('start_time', '')
+                        start_time_raw = game.get('start_time', '')
                         location = game.get('location', '')
                         attendees = game.get('attendees', [])
                         attendees_count = len(attendees)
@@ -156,6 +183,12 @@ async def day_summary_cmd(m: Message):
                             date_formatted = date_obj.strftime("%d.%m")
                         except:
                             date_formatted = game_date
+                        
+                        # Format time - remove seconds if present (HH:MM:SS -> HH:MM)
+                        start_time = start_time_raw
+                        if ':' in start_time_raw and len(start_time_raw) > 5:
+                            # Time has format HH:MM:SS, take only HH:MM
+                            start_time = start_time_raw[:5]
                         
                         footer += (
                             f"• <b>{date_formatted}</b> в {start_time} - {location} "
@@ -236,7 +269,7 @@ async def day_summary_cmd(m: Message):
                 message += f"\n\n🎾 <b>Предстоящие игры (ближайшие 5 дней):</b>\n"
                 for game in upcoming_games[:5]:  # Show max 5 games
                     game_date = game.get('date', '')
-                    start_time = game.get('start_time', '')
+                    start_time_raw = game.get('start_time', '')
                     location = game.get('location', '')
                     attendees = game.get('attendees', [])
                     attendees_count = len(attendees)
@@ -247,6 +280,12 @@ async def day_summary_cmd(m: Message):
                         date_formatted = date_obj.strftime("%d.%m")
                     except:
                         date_formatted = game_date
+                    
+                    # Format time - remove seconds if present (HH:MM:SS -> HH:MM)
+                    start_time = start_time_raw
+                    if ':' in start_time_raw and len(start_time_raw) > 5:
+                        # Time has format HH:MM:SS, take only HH:MM
+                        start_time = start_time_raw[:5]
                     
                     message += (
                         f"• <b>{date_formatted}</b> в {start_time} - {location} "
