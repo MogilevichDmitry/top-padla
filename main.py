@@ -12,10 +12,24 @@ from dotenv import load_dotenv
 import aiohttp
 
 # ---------- Config ----------
+# Load .env file if it exists (for local development)
+# On production platforms (Railway, Render, etc.) variables come from environment
 load_dotenv()
+
+# Debug: print all environment variables (without sensitive values)
+print("Environment check:")
+print(f"BOT_TOKEN exists: {bool(os.getenv('BOT_TOKEN'))}")
+print(f"WEB_API_URL: {os.getenv('WEB_API_URL', 'NOT SET')}")
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is required in .env")
+    # Try to get from different possible names
+    BOT_TOKEN = os.getenv("BOT_TOKEN") or os.environ.get("BOT_TOKEN")
+    if not BOT_TOKEN:
+        raise RuntimeError(
+            "BOT_TOKEN is required. Set it as environment variable.\n"
+            f"Current env vars: {list(os.environ.keys())}"
+        )
 
 WEB_API_URL = os.getenv("WEB_API_URL", "http://localhost:3000")
 # WEB_API_URL - URL веб-приложения для API запросов
