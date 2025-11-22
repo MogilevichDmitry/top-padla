@@ -56,99 +56,14 @@ async def get_day_summary() -> Dict:
             raise Exception(f"Failed to connect to API: {str(e)}")
 
 
-async def get_upcoming_games() -> List[Dict]:
-    """Get proposed games for the next 5 days from web API."""
+async def get_upcoming_games(days: int = 5) -> List[Dict]:
+    """Get proposed games for the next N days from web API."""
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{WEB_API_URL}/api/games") as response:
+            async with session.get(f"{WEB_API_URL}/api/games/upcoming?days={days}") as response:
                 if response.status == 200:
                     games = await response.json()
-                    
-                    # Filter games for next 5 days
-                    now = datetime.now(timezone.utc)
-                    warsaw_tz = None
-                    try:
-                        import zoneinfo
-                        warsaw_tz = zoneinfo.ZoneInfo("Europe/Warsaw")
-                    except ImportError:
-                        from zoneinfo import ZoneInfo
-                        warsaw_tz = ZoneInfo("Europe/Warsaw")
-                    
-                    warsaw_now = now.astimezone(warsaw_tz)
-                    today = warsaw_now.date()
-                    five_days_later = today + timedelta(days=5)
-                    
-                    print(f"🔍 Total games from API: {len(games)}")
-                    print(f"🔍 Today (Warsaw): {today}")
-                    print(f"🔍 Five days later: {five_days_later}")
-                    
-                    upcoming_games = []
-                    for game in games:
-                        game_date_str = game.get('date')
-                        if not game_date_str:
-                            continue
-                        
-                        # Parse date (YYYY-MM-DD format)
-                        try:
-                            game_date = datetime.strptime(game_date_str, "%Y-%m-%d").date()
-                            
-                            print(f"🔍 Checking game: date={game_date}, location={game.get('location')}")
-                            
-                            # Check if game is in the next 5 days and not in the past
-                            if today <= game_date <= five_days_later:
-                                print(f"  ✅ Date in range")
-                                # Check if game hasn't passed yet (consider time)
-                                if game_date > today:
-                                    print(f"  ✅ Future game, adding")
-                                    upcoming_games.append(game)
-                                elif game_date == today:
-                                    # For today, check if game hasn't finished yet
-                                    start_time_str = game.get('start_time', '00:00')
-                                    end_time_str = game.get('end_time')
-                                    
-                                    try:
-                                        # Remove seconds if present (HH:MM:SS -> HH:MM)
-                                        if ':' in start_time_str and len(start_time_str) > 5:
-                                            start_time_str = start_time_str[:5]
-                                        
-                                        start_time = datetime.strptime(start_time_str, "%H:%M").time()
-                                        current_time = warsaw_now.time()
-                                        
-                                        # Check end_time if available, otherwise assume game lasts 2 hours
-                                        if end_time_str:
-                                            # Remove seconds if present
-                                            if ':' in end_time_str and len(end_time_str) > 5:
-                                                end_time_str = end_time_str[:5]
-                                            end_time = datetime.strptime(end_time_str, "%H:%M").time()
-                                            # Game is upcoming if current time is before end_time
-                                            if current_time < end_time:
-                                                upcoming_games.append(game)
-        else:
-                                            # If no end_time, check if start_time hasn't passed
-                                            # or if it's within 2 hours (game still ongoing)
-                                            if start_time >= current_time:
-                                                upcoming_games.append(game)
-        else:
-                                                # Check if game might still be ongoing (started less than 2 hours ago)
-                                                start_datetime = datetime.combine(today, start_time)
-                                                # Add timezone to start_datetime to match warsaw_now
-                                                start_datetime = start_datetime.replace(tzinfo=warsaw_tz)
-                                                time_diff = warsaw_now - start_datetime
-                                                # If game started less than 2 hours ago, it might still be ongoing
-                                                if 0 < time_diff.total_seconds() <= 7200:  # 2 hours in seconds
-                                                    upcoming_games.append(game)
-                                    except Exception as e:
-                                        # If time parsing fails, skip the game for today
-                                        print(f"  ❌ Error processing today's game: {e}")
-                                        pass
-        else:
-                                print(f"  ❌ Date not in range: {game_date} not in [{today}, {five_days_later}]")
-                        except ValueError as e:
-                            print(f"  ❌ Date parsing error: {e}")
-                            continue
-                    
-                    print(f"🔍 Total upcoming games: {len(upcoming_games)}")
-                    return upcoming_games
+                    return games
                 else:
                     error_text = await response.text()
                     raise Exception(f"API error {response.status}: {error_text}")
