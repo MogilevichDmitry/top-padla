@@ -49,7 +49,7 @@ async def get_day_summary() -> Dict:
             async with session.get(f"{WEB_API_URL}/api/day-summary") as response:
                 if response.status == 200:
                     return await response.json()
-            else:
+                else:
                     error_text = await response.text()
                     raise Exception(f"API error {response.status}: {error_text}")
         except aiohttp.ClientError as e:
@@ -62,8 +62,7 @@ async def get_upcoming_games(days: int = 5) -> List[Dict]:
         try:
             async with session.get(f"{WEB_API_URL}/api/games/upcoming?days={days}") as response:
                 if response.status == 200:
-                    games = await response.json()
-                    return games
+                    return await response.json()
                 else:
                     error_text = await response.text()
                     raise Exception(f"API error {response.status}: {error_text}")
@@ -126,8 +125,8 @@ async def day_summary_cmd(m: Message):
                     footer += (
                         f"\n💡 <i>Присоединиться: "
                         f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
-            )
-        else:
+                    )
+                else:
                     footer = (
                         f"💡 <i>Предложить игру: "
                         f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
@@ -172,7 +171,7 @@ async def day_summary_cmd(m: Message):
             elif change < 0:
                 change_str = f"{change:.1f}"
                 change_emoji = "🔴"
-        else:
+            else:
                 change_str = "0.0"
                 change_emoji = "⚪"
             
@@ -183,7 +182,7 @@ async def day_summary_cmd(m: Message):
             change_with_pts = f"{change_str} pts"
             
             # Create aligned line - all numbers will be at same position
-        line = (
+            line = (
                 f"<code>{i}. {name_padded}  {matches_str:>8}  "
                 f"{change_emoji} {change_with_pts:>10}</code>"
             )
@@ -223,8 +222,8 @@ async def day_summary_cmd(m: Message):
                 message += (
                     f"\n💡 <i>Присоединиться: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
-            )
-        else:
+                )
+            else:
                 message += (
                     f"\n\n💡 <i>Предложить игру: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
