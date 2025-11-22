@@ -170,6 +170,8 @@ export async function recomputePairsFromMatches(): Promise<void> {
     SELECT * FROM matches ORDER BY date ASC, id ASC
   `;
 
+  console.log(`[recomputePairsFromMatches] Processing ${matches.length} matches`);
+
   type PairKey = string; // "minId-maxId"
   interface Accum {
     player1_id: number;
@@ -214,6 +216,7 @@ export async function recomputePairsFromMatches(): Promise<void> {
     return pairs[key];
   };
 
+  let processedMatches = 0;
   for (const m of matches) {
     if (
       Array.isArray(m.team_a) &&
@@ -245,8 +248,13 @@ export async function recomputePairsFromMatches(): Promise<void> {
         B.wins += 1;
         A.losses += 1;
       }
+      processedMatches++;
     }
   }
+
+  console.log(
+    `[recomputePairsFromMatches] Processed ${processedMatches} valid matches, created ${Object.keys(pairs).length} pairs`
+  );
 
   // Replace pairs table content with new aggregated data
   await sql`DELETE FROM pairs`;
@@ -260,6 +268,8 @@ export async function recomputePairsFromMatches(): Promise<void> {
     }, ${acc.matches}, ${acc.wins}, ${acc.losses})
     `;
   }
+
+  console.log(`[recomputePairsFromMatches] Inserted ${Object.keys(pairs).length} pairs into database`);
 }
 
 // Game Sessions functions

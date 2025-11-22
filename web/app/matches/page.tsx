@@ -30,6 +30,12 @@ export default function MatchesPage() {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [confirmText, setConfirmText] = useState<string>("");
   const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
+  const [previousMatchesCache, setPreviousMatchesCache] = useState<
+    Map<number, { matches: Match[]; count: number }>
+  >(new Map());
+  const [loadingPreviousMatches, setLoadingPreviousMatches] = useState<
+    Set<number>
+  >(new Set());
   const {
     data,
     fetchNextPage,
@@ -75,42 +81,61 @@ export default function MatchesPage() {
   }
 
   // Find matches with the same team composition (only previous matches)
+  // This function now uses cached data from API if available, otherwise returns empty array
   function findSameCompositionMatches(currentMatch: Match): Match[] {
-    const sameMatches: Match[] = [];
-
-    for (const match of allMatches) {
-      // Skip the current match itself
-      if (match.id === currentMatch.id) continue;
-
-      // Only include matches that happened before this one
-      const currentDate = new Date(currentMatch.date).getTime();
-      const matchDate = new Date(match.date).getTime();
-      if (matchDate >= currentDate) continue;
-
-      // Check if teams match (either same order or swapped)
-      const teamsMatchSameOrder =
-        teamsMatch(match.team_a, currentMatch.team_a) &&
-        teamsMatch(match.team_b, currentMatch.team_b);
-
-      const teamsMatchSwapped =
-        teamsMatch(match.team_a, currentMatch.team_b) &&
-        teamsMatch(match.team_b, currentMatch.team_a);
-
-      if (teamsMatchSameOrder || teamsMatchSwapped) {
-        sameMatches.push(match);
-      }
-    }
-
-    // Sort by date (newest first)
-    return sameMatches.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateB - dateA;
-    });
+    const cached = previousMatchesCache.get(currentMatch.id);
+    return cached?.matches || [];
   }
 
-  function toggleMatchExpansion(matchId: number) {
-    setExpandedMatchId(expandedMatchId === matchId ? null : matchId);
+  // Load previous matches from API
+  async function loadPreviousMatches(matchId: number) {
+    // Don't reload if already cached or loading
+    if (
+      previousMatchesCache.has(matchId) ||
+      loadingPreviousMatches.has(matchId)
+    ) {
+      return;
+    }
+
+    setLoadingPreviousMatches((prev) => new Set(prev).add(matchId));
+
+    try {
+      const res = await fetch(`/api/matches/${matchId}/previous`);
+      if (!res.ok) throw new Error("Failed to load previous matches");
+      const data = await res.json();
+      setPreviousMatchesCache((prev) => {
+        const next = new Map(prev);
+        next.set(matchId, {
+          matches: data.previousMatches || [],
+          count: data.count || 0,
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error("Error loading previous matches:", error);
+      // Set empty result on error
+      setPreviousMatchesCache((prev) => {
+        const next = new Map(prev);
+        next.set(matchId, { matches: [], count: 0 });
+        return next;
+      });
+    } finally {
+      setLoadingPreviousMatches((prev) => {
+        const next = new Set(prev);
+        next.delete(matchId);
+        return next;
+      });
+    }
+  }
+
+  async function toggleMatchExpansion(matchId: number) {
+    const wasExpanded = expandedMatchId === matchId;
+    setExpandedMatchId(wasExpanded ? null : matchId);
+
+    // Load previous matches when expanding (if not already loaded)
+    if (!wasExpanded) {
+      await loadPreviousMatches(matchId);
+    }
   }
 
   async function handleDeleteMatch(id: number) {
@@ -177,6 +202,32 @@ export default function MatchesPage() {
       team_b_names: match.team_b.map((id) => getPlayerName(id)),
     }));
   }, [allMatches, players]);
+
+  // Load previous matches count for visible matches gradually
+  useEffect(() => {
+    // Load count for first 5 visible matches that don't have cached data
+    const loadCountsForVisibleMatches = async () => {
+      const matchIdsToLoad = matchesWithNames
+        .filter((match) => !previousMatchesCache.has(match.id))
+        .map((match) => match.id)
+        .slice(0, 5); // Load max 5 at a time
+
+      for (const matchId of matchIdsToLoad) {
+        await loadPreviousMatches(matchId);
+        // Small delay between requests to avoid overwhelming the server
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+    };
+
+    if (matchesWithNames.length > 0) {
+      // Delay initial load slightly to avoid blocking initial render
+      const timer = setTimeout(() => {
+        loadCountsForVisibleMatches();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchesWithNames.length]); // Reload when matches change
 
   // Infinite scroll observer
   useEffect(() => {
@@ -262,7 +313,13 @@ export default function MatchesPage() {
             const matchNumber = totalMatches - index;
             const isExpanded = expandedMatchId === match.id;
             const sameCompositionMatches = findSameCompositionMatches(match);
-            const hasHistory = sameCompositionMatches.length > 0;
+            const cached = previousMatchesCache.get(match.id);
+            const previousCount = cached?.count;
+            const hasHistory =
+              previousCount !== undefined
+                ? previousCount > 0
+                : sameCompositionMatches.length > 0; // Show button if we have local matches or haven't checked yet
+            const isLoadingPrevious = loadingPreviousMatches.has(match.id);
 
             // Calculate overall score summary including current match
             let teamAWins = 0;
@@ -320,14 +377,15 @@ export default function MatchesPage() {
                     <span className="text-base">
                       {getMatchTypeEmoji(match.type)}
                     </span>
-                    {hasHistory && (
+                    {(hasHistory || isLoadingPrevious) && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleMatchExpansion(match.id);
                         }}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        disabled={isLoadingPrevious}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-wait"
                         aria-label={
                           isExpanded
                             ? "Collapse match history"
@@ -339,7 +397,13 @@ export default function MatchesPage() {
                             : "Show previous matches"
                         }
                       >
-                        ({sameCompositionMatches.length} previous)
+                        (
+                        {isLoadingPrevious
+                          ? "..."
+                          : previousCount !== undefined
+                          ? previousCount
+                          : sameCompositionMatches.length}{" "}
+                        previous)
                         <svg
                           className={`h-4 w-4 transition-transform ${
                             isExpanded ? "rotate-180" : ""

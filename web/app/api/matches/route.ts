@@ -156,7 +156,22 @@ export async function POST(request: NextRequest) {
     const match = await createMatch(body);
 
     // Recompute pairs after inserting the match so new pairs appear and ratings update
-    await recomputePairsFromMatches();
+    try {
+      console.log("[POST /api/matches] Recomputing pairs after match creation...");
+      await recomputePairsFromMatches();
+      console.log("[POST /api/matches] Pairs recomputed successfully");
+    } catch (pairError) {
+      // Log error but don't fail the match creation
+      const errorMessage =
+        pairError instanceof Error
+          ? pairError.message
+          : "Unknown error recomputing pairs";
+      console.error(
+        "[POST /api/matches] Error recomputing pairs (match still created):",
+        errorMessage
+      );
+      // Note: We continue even if pair recomputation fails, as the match was created successfully
+    }
 
     // Invalidate cache for all related routes
     revalidatePath("/api/ratings");

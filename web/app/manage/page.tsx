@@ -22,6 +22,7 @@ export default function ManagePage() {
   } | null>(null);
   const [matchError, setMatchError] = useState<string | null>(null);
   const [playerError, setPlayerError] = useState<string | null>(null);
+  const [recomputingPairs, setRecomputingPairs] = useState(false);
 
   // Add Player form
   const [playerName, setPlayerName] = useState("");
@@ -447,6 +448,49 @@ export default function ManagePage() {
               </Button>
             </div>
           </form>
+        </div>
+
+        {/* Admin Actions */}
+        <div className="bg-white border border-gray-200 rounded-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Actions</h2>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">
+                Recompute all pair ratings from match history. Use this if pairs are not updating correctly after adding matches.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setRecomputingPairs(true);
+                    const res = await fetch("/api/pairs", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                    });
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => ({}));
+                      throw new Error(data?.error || "Failed to recompute pairs");
+                    }
+                    setNotify({ text: "Pairs recomputed successfully", type: "success" });
+                    // Invalidate caches
+                    queryClient.invalidateQueries({ queryKey: ["pairs"] });
+                    queryClient.invalidateQueries({ queryKey: ["ratings"] });
+                    queryClient.invalidateQueries({ queryKey: ["playerStats"] });
+                  } catch (e: unknown) {
+                    const message = e instanceof Error ? e.message : "Error";
+                    setNotify({ text: message, type: "error" });
+                  } finally {
+                    setRecomputingPairs(false);
+                    setTimeout(() => setNotify(null), 6000);
+                  }
+                }}
+                disabled={recomputingPairs}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium transition-colors"
+              >
+                {recomputingPairs ? "Recomputing..." : "Recompute Pairs"}
+              </button>
+            </div>
+          </div>
         </div>
 
         {notify && (

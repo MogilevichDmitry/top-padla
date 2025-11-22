@@ -111,7 +111,8 @@ export default function GamesPage() {
   useEffect(() => {
     const savedName = localStorage.getItem("gameName");
     if (savedName) {
-      setAttendeeName(savedName);
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => setAttendeeName(savedName), 0);
     }
   }, []);
 
@@ -246,33 +247,33 @@ export default function GamesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-4 px-4 md:py-12 md:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 py-3 px-3 md:py-12 md:px-8 pt-16 md:pt-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
               Game Scheduling
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-1 text-sm md:text-base">
               Propose a game or join an existing one
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold shadow-lg transition-colors text-sm md:text-base whitespace-nowrap self-start sm:self-auto"
           >
             + Propose Game
           </button>
         </div>
 
         {upcomingGames.length === 0 && pastGames.length === 0 && (
-          <div className="bg-white rounded-lg shadow-xl border border-gray-100 p-12 text-center">
-            <p className="text-gray-500 text-xl font-medium mb-4">
+          <div className="bg-white rounded-lg shadow-xl border border-gray-100 p-6 md:p-12 text-center">
+            <p className="text-gray-500 text-lg md:text-xl font-medium mb-4">
               No games scheduled yet
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold text-sm md:text-base"
             >
               Create First Game
             </button>
@@ -280,11 +281,11 @@ export default function GamesPage() {
         )}
 
         {upcomingGames.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               Upcoming Games
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {upcomingGames.map((game) => (
                 <GameCard
                   key={game.id}
@@ -301,10 +302,10 @@ export default function GamesPage() {
 
         {pastGames.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               Past Games
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {pastGames.map((game) => (
                 <GameCard
                   key={game.id}
@@ -386,26 +387,30 @@ function GameCard({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-lg border border-gray-200 p-6 ${
+      className={`bg-white rounded-lg shadow-lg border border-gray-200 p-4 md:p-6 ${
         isPast ? "opacity-75" : ""
       }`}
     >
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl">{locationEmoji}</span>
+          <div className="flex items-center gap-2 md:gap-3 mb-2">
+            <span className="text-xl md:text-2xl">{locationEmoji}</span>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900">
                 {formatDateWithDay(game.date)}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-sm md:text-base text-gray-600">
                 {formatTime(game.start_time)}
                 {game.end_time && ` - ${formatTime(game.end_time)}`}
               </p>
             </div>
           </div>
-          <p className="text-gray-700 font-medium mb-2">📍 {game.location}</p>
-          <p className="text-sm text-gray-500">Created by: {game.created_by}</p>
+          <p className="text-sm md:text-base text-gray-700 font-medium mb-1 md:mb-2">
+            📍 {game.location}
+          </p>
+          <p className="text-xs md:text-sm text-gray-500">
+            Created by: {game.created_by}
+          </p>
         </div>
 
         {!isPast && (
@@ -440,7 +445,7 @@ function GameCard({
 
       {/* Attendees List */}
       {(attendees.length > 0 || declined.length > 0) && (
-        <div className="mt-5 pt-4 border-t border-gray-100 space-y-5">
+        <div className="mt-4 md:mt-5 pt-3 md:pt-4 border-t border-gray-100 space-y-4 md:space-y-5">
           {attendees.length > 0 && (
             <div>
               <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
