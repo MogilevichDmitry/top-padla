@@ -85,7 +85,9 @@ async def day_summary_cmd(m: Message):
     try:
         await m.answer("📊 Подсчитываю итоги дня...")
         
+        print("Fetching day summary...")
         data = await get_day_summary()
+        print(f"Got data: {data.get('today', 'N/A')}, players: {len(data.get('players', []))}")
         
         today_str = data.get('today', datetime.now().strftime("%d.%m.%Y"))
         players = data.get('players', [])
@@ -192,7 +194,9 @@ async def day_summary_cmd(m: Message):
         
         # Add upcoming games info
         try:
+            print("Fetching upcoming games...")
             upcoming_games = await get_upcoming_games()
+            print(f"Got {len(upcoming_games)} upcoming games")
             if upcoming_games:
                 message += f"\n\n🎾 <b>Предстоящие игры (ближайшие 5 дней):</b>\n"
                 for game in upcoming_games[:5]:  # Show max 5 games
@@ -246,12 +250,15 @@ async def day_summary_cmd(m: Message):
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        print(f"Error in day_summary_cmd: {error_details}")
-        await m.answer(
-            f"❌ Ошибка при получении данных: {str(e)}\n\n"
-            f"Убедитесь, что веб-приложение запущено и WEB_API_URL настроен правильно.",
-            reply_markup=ReplyKeyboardRemove()
-        )
+        print(f"ERROR in day_summary_cmd: {error_details}")
+        try:
+            await m.answer(
+                f"❌ Ошибка при получении данных: {str(e)}\n\n"
+                f"Убедитесь, что веб-приложение запущено и WEB_API_URL настроен правильно.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+        except Exception as send_error:
+            print(f"ERROR sending error message: {send_error}")
 
 
 @dp.message(Command("removekeyboard"))
