@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       now.toLocaleString("en-US", { timeZone: "Europe/Warsaw" })
     );
     const todayDate = warsawTime.toISOString().split("T")[0];
-    
+
     const currentHours = warsawTime.getHours();
     const currentMinutes = warsawTime.getMinutes();
     const currentTime = `${currentHours
@@ -46,10 +46,11 @@ export async function GET(request: NextRequest) {
       if (game.date === todayDate) {
         // Use end_time if available, otherwise use start_time
         const compareTime = game.end_time || game.start_time;
-        
+
         // Remove seconds if present (HH:MM:SS -> HH:MM)
-        const cleanTime = compareTime.length > 5 ? compareTime.substring(0, 5) : compareTime;
-        
+        const cleanTime =
+          compareTime.length > 5 ? compareTime.substring(0, 5) : compareTime;
+
         return cleanTime >= currentTime;
       }
 
@@ -69,4 +70,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGameSessions, createGameSession, GameSession } from "@/lib/db";
+import { sendNewGameNotification } from "@/lib/telegram";
 
 export async function GET() {
   try {
@@ -83,6 +84,14 @@ export async function POST(request: NextRequest) {
       location as "Padel Point" | "Zawady",
       createdBy
     );
+
+    // Send Telegram notification (async, don't wait for it)
+    sendNewGameNotification({
+      date,
+      startTime,
+      location,
+      createdBy,
+    }).catch((err) => console.error("Failed to send notification:", err));
 
     return NextResponse.json(session, { status: 201 });
   } catch (error) {
