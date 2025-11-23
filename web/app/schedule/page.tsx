@@ -307,7 +307,7 @@ export default function GamesPage() {
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold shadow-lg transition-colors text-sm md:text-base whitespace-nowrap self-start sm:self-auto"
           >
-            + Propose Game
+            ➕ Propose Game
           </button>
         </div>
 
@@ -322,6 +322,25 @@ export default function GamesPage() {
             >
               Create First Game
             </button>
+          </div>
+        )}
+
+        {upcomingGames.length === 0 && pastGames.length > 0 && (
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
+              Upcoming Games
+            </h2>
+            <div className="bg-white rounded-lg shadow-xl border border-gray-100 p-6 md:p-8 text-center">
+              <p className="text-gray-500 text-base md:text-lg font-medium">
+                No upcoming games
+              </p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold text-sm md:text-base"
+              >
+                Propose Game
+              </button>
+            </div>
           </div>
         )}
 
