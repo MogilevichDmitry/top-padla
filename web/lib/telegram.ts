@@ -17,7 +17,9 @@ export async function sendNewGameNotification(game: GameNotification) {
   console.log("🔑 TELEGRAM_CHAT_ID value:", chatId);
 
   if (!botToken || !chatId) {
-    console.warn("❌ BOT_TOKEN or TELEGRAM_CHAT_ID not set, skipping notification");
+    console.warn(
+      "❌ BOT_TOKEN or TELEGRAM_CHAT_ID not set, skipping notification"
+    );
     return;
   }
 
@@ -31,15 +33,18 @@ export async function sendNewGameNotification(game: GameNotification) {
       .padStart(2, "0")}`;
 
     // Format time - remove seconds if present (HH:MM:SS -> HH:MM)
-    const time = game.startTime.length > 5 ? game.startTime.substring(0, 5) : game.startTime;
+    const time =
+      game.startTime.length > 5
+        ? game.startTime.substring(0, 5)
+        : game.startTime;
 
-    const message = `🎾 <b>Новая игра!</b>
+    const message = `🎾 <b>Новый матч создан!</b>
 
 📅 <b>${dateFormatted}</b> в ${time}
 📍 ${game.location}
-👤 Создал: ${game.createdBy}
+👤 Инициатор: ${game.createdBy}
 
-💡 <i>Присоединяйся по ссылке: <a href="https://www.qwerty123.eu/schedule">qwerty123.eu/schedule</a></i>`;
+💡 <i>👉 Присоединяйся: <a href="https://www.qwerty123.eu/schedule">qwerty123.eu/schedule</a></i>`;
 
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -67,4 +72,3 @@ export async function sendNewGameNotification(game: GameNotification) {
     console.error("Error sending Telegram notification:", error);
   }
 }
-
