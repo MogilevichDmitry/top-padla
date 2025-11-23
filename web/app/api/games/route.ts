@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
   console.log("🎮 POST /api/games - Game creation request received");
   try {
     const body = await request.json();
-    console.log("📋 Game data:", { date, startTime, endTime, location, createdBy: body.createdBy });
     const { date, startTime, endTime, location, createdBy } = body;
+    console.log("📋 Game data:", { date, startTime, endTime, location, createdBy });
 
     // Validation
     if (!date || !startTime || !location || !createdBy) {
