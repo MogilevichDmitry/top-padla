@@ -307,7 +307,7 @@ export default function GamesPage() {
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold shadow-lg transition-colors text-sm md:text-base whitespace-nowrap self-start sm:self-auto"
           >
-            ➕ Propose Game
+            Propose Game
           </button>
         </div>
 

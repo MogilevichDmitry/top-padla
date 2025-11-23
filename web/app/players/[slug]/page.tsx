@@ -6,6 +6,7 @@ import Link from "next/link";
 import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
 import { usePlayerDetails } from "@/hooks/usePlayerDetails";
 import Loading from "@/components/Loading";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
 
 export default function PlayerPage() {
   const router = useRouter();
@@ -163,6 +164,14 @@ export default function PlayerPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Activity Heatmap */}
+        <div className="bg-white rounded-md p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Activity Heatmap
+          </h2>
+          <ActivityHeatmap matches={data.matches} />
         </div>
 
         {/* Rating Summary */}

@@ -44,7 +44,7 @@ export async function sendNewGameNotification(game: GameNotification) {
 📍 ${game.location}
 👤 Инициатор: ${game.createdBy}
 
-💡 <i>👉 Присоединяйся: <a href="https://www.qwerty123.eu/schedule">qwerty123.eu/schedule</a></i>`;
+<i>👉 Присоединяйся: <a href="https://www.qwerty123.eu/schedule">qwerty123.eu/schedule</a></i>`;
 
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
