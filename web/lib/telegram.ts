@@ -11,8 +11,13 @@ export async function sendNewGameNotification(game: GameNotification) {
   const botToken = process.env.BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
+  console.log("🔔 sendNewGameNotification called with:", game);
+  console.log("🔑 BOT_TOKEN exists:", !!botToken);
+  console.log("🔑 TELEGRAM_CHAT_ID exists:", !!chatId);
+  console.log("🔑 TELEGRAM_CHAT_ID value:", chatId);
+
   if (!botToken || !chatId) {
-    console.warn("BOT_TOKEN or TELEGRAM_CHAT_ID not set, skipping notification");
+    console.warn("❌ BOT_TOKEN or TELEGRAM_CHAT_ID not set, skipping notification");
     return;
   }
 

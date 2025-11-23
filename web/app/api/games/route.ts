@@ -32,8 +32,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("🎮 POST /api/games - Game creation request received");
   try {
     const body = await request.json();
+    console.log("📋 Game data:", { date, startTime, endTime, location, createdBy: body.createdBy });
     const { date, startTime, endTime, location, createdBy } = body;
 
     // Validation
@@ -85,13 +87,18 @@ export async function POST(request: NextRequest) {
       createdBy
     );
 
+    console.log("✅ Game session created:", session.id);
+
     // Send Telegram notification (async, don't wait for it)
+    console.log("📤 Sending Telegram notification...");
     sendNewGameNotification({
       date,
       startTime,
       location,
       createdBy,
-    }).catch((err) => console.error("Failed to send notification:", err));
+    })
+      .then(() => console.log("✅ Telegram notification sent successfully"))
+      .catch((err) => console.error("❌ Failed to send notification:", err));
 
     return NextResponse.json(session, { status: 201 });
   } catch (error) {
