@@ -202,7 +202,7 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
         matches in the last year
       </div>
 
-      <div className="flex items-start gap-2 overflow-x-auto overflow-y-hidden py-2">
+      <div className="flex items-start gap-2 overflow-x-auto md:overflow-x-visible overflow-y-hidden py-2 pr-2">
         {/* Left column: Only day labels */}
         <div className="shrink-0">
           {/* Empty space for month labels */}
@@ -213,7 +213,7 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
               (day, idx) => (
                 <div
                   key={idx}
-                  className="h-3.5 text-xs text-gray-500 text-right pr-2 flex items-center justify-end"
+                  className="h-3.5 md:h-4 text-xs text-gray-500 text-right pr-2 flex items-center justify-end"
                   style={{ lineHeight: "14px", minHeight: "14px" }}
                 >
                   {day}
@@ -224,9 +224,12 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
         </div>
 
         {/* Heatmap grid with month labels on top */}
-        <div className="shrink-0 relative">
+        <div className="shrink-0 md:flex-1 relative">
           {/* Month labels - positioned above the grid using same flex layout */}
-          <div className="flex gap-0.5 mb-0.5" style={{ height: "16px" }}>
+          <div
+            className="flex gap-0.5 md:gap-1 mb-0.5"
+            style={{ height: "16px" }}
+          >
             {weeks.map((week, weekIndex) => {
               // Check if this week should have a month label
               const monthLabel = monthLabels.find(
@@ -236,7 +239,7 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
               return (
                 <div
                   key={weekIndex}
-                  className="w-3.5 flex items-start shrink-0"
+                  className="w-3.5 md:flex-1 flex items-start shrink-0"
                 >
                   {monthLabel && (
                     <div className="text-xs text-gray-600 whitespace-nowrap">
@@ -249,9 +252,12 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
           </div>
 
           {/* Heatmap grid */}
-          <div className="flex gap-0.5">
+          <div className="flex gap-0.5 md:gap-1">
             {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-0.5 shrink-0">
+              <div
+                key={weekIndex}
+                className="flex flex-col gap-0.5 md:gap-1 shrink-0 md:flex-1"
+              >
                 {week.map((day, dayIndex) => {
                   const isEmpty = !day.dateString;
 
@@ -259,7 +265,7 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
                     return (
                       <div
                         key={`${weekIndex}-${dayIndex}`}
-                        className="w-3.5 h-3.5 rounded-sm bg-transparent shrink-0"
+                        className="w-3.5 h-3.5 md:w-full md:h-4 rounded-sm bg-transparent shrink-0"
                         style={{ minHeight: "14px", minWidth: "14px" }}
                       />
                     );
@@ -308,7 +314,7 @@ export default function ActivityHeatmap({ matches }: ActivityHeatmapProps) {
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`w-3.5 h-3.5 rounded-sm ${getColor(
+                      className={`w-3.5 h-3.5 md:w-full md:h-4 rounded-sm ${getColor(
                         day.count
                       )} transition-all hover:ring-1 hover:ring-blue-400 hover:ring-offset-1 cursor-pointer relative shrink-0 touch-none`}
                       style={{ minHeight: "14px", minWidth: "14px" }}
