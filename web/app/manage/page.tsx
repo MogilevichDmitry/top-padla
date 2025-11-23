@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
+import MatchForm, { MatchFormData } from "@/components/MatchForm";
 
 interface PlayerRow {
   id: number;
@@ -23,19 +24,22 @@ export default function ManagePage() {
   const [matchError, setMatchError] = useState<string | null>(null);
   const [playerError, setPlayerError] = useState<string | null>(null);
   const [recomputingPairs, setRecomputingPairs] = useState(false);
+  const [formKey, setFormKey] = useState(0);
 
   // Add Player form
   const [playerName, setPlayerName] = useState("");
   const [playerTgId, setPlayerTgId] = useState<string>("");
 
-  // Add Match form
-  const [type, setType] = useState<"to6" | "to4" | "to3">("to6");
-  const [a1, setA1] = useState<number | "">("");
-  const [a2, setA2] = useState<number | "">("");
-  const [b1, setB1] = useState<number | "">("");
-  const [b2, setB2] = useState<number | "">("");
-  const [sa, setSa] = useState<string>("");
-  const [sb, setSb] = useState<string>("");
+  // Add Match form data
+  const [matchFormData, setMatchFormData] = useState<MatchFormData>({
+    type: "to6",
+    teamA1: "",
+    teamA2: "",
+    teamB1: "",
+    teamB2: "",
+    scoreA: "",
+    scoreB: "",
+  });
 
   useEffect(() => {
     async function init() {
@@ -58,12 +62,13 @@ export default function ManagePage() {
   }, []);
 
   const canSubmitMatch = useMemo(() => {
-    if ([a1, a2, b1, b2].some((v) => v === "")) return false;
-    if (sa === "" || sb === "") return false;
-    const ids = [a1, a2, b1, b2] as number[];
+    const { teamA1, teamA2, teamB1, teamB2, scoreA, scoreB } = matchFormData;
+    if ([teamA1, teamA2, teamB1, teamB2].some((v) => v === "")) return false;
+    if (scoreA === "" || scoreB === "") return false;
+    const ids = [teamA1, teamA2, teamB1, teamB2] as number[];
     const setIds = new Set(ids);
     return setIds.size === 4;
-  }, [a1, a2, b1, b2, sa, sb]);
+  }, [matchFormData]);
 
   async function addPlayer(e: React.FormEvent) {
     e.preventDefault();
@@ -101,8 +106,7 @@ export default function ManagePage() {
     }
   }
 
-  async function addMatch(e: React.FormEvent) {
-    e.preventDefault();
+  async function addMatch(data: MatchFormData) {
     if (!canSubmitMatch) {
       setMatchError("Pick 4 different players and enter both scores");
       return;
@@ -114,26 +118,31 @@ export default function ManagePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: new Date().toISOString(),
-          type,
-          team_a: [a1, a2],
-          team_b: [b1, b2],
-          score_a: sa === "" ? 0 : Number(sa),
-          score_b: sb === "" ? 0 : Number(sb),
+          type: data.type,
+          team_a: [data.teamA1, data.teamA2] as number[],
+          team_b: [data.teamB1, data.teamB2] as number[],
+          score_a: data.scoreA === "" ? 0 : Number(data.scoreA),
+          score_b: data.scoreB === "" ? 0 : Number(data.scoreB),
           created_by: null,
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to create match");
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData?.error || "Failed to create match");
       }
       setNotify({ text: "Match created", type: "success" });
       setMatchError(null);
-      setA1("");
-      setA2("");
-      setB1("");
-      setB2("");
-      setSa("");
-      setSb("");
+      // Reset form by changing key to force remount
+      setFormKey((prev) => prev + 1);
+      setMatchFormData({
+        type: "to6",
+        teamA1: "",
+        teamA2: "",
+        teamB1: "",
+        teamB2: "",
+        scoreA: "",
+        scoreB: "",
+      });
       // Invalidate client caches so pages update immediately
       queryClient.invalidateQueries({ queryKey: ["pairs"] });
       queryClient.invalidateQueries({ queryKey: ["ratings"] });
@@ -179,237 +188,15 @@ export default function ManagePage() {
         {/* Add Match - moved to top for mobile-first quick entry */}
         <div className="bg-white border border-gray-200 rounded-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Add Match</h2>
-          <form onSubmit={addMatch} className="space-y-4">
-            {/* Type Selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Match Type
-              </label>
-              <div
-                role="tablist"
-                aria-label="Match type"
-                className="inline-flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5 border border-gray-200"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={type === "to3"}
-                  onClick={() => setType("to3")}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-medium transition-all duration-150 ${
-                    type === "to3"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <span className="text-base">🚀</span>
-                  <span className="text-sm">TO3</span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={type === "to4"}
-                  onClick={() => setType("to4")}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-medium transition-all duration-150 ${
-                    type === "to4"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <span className="text-base">🏸</span>
-                  <span className="text-sm">TO4</span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={type === "to6"}
-                  onClick={() => setType("to6")}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-medium transition-all duration-150 ${
-                    type === "to6"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <span className="text-base">🎾</span>
-                  <span className="text-sm">TO6</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Team A Section */}
-            <div className="bg-linear-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-100">
-              <div className="flex items-center gap-3 mb-3">
-                <h3 className="text-base font-semibold text-gray-900">
-                  Team A
-                </h3>
-                <div className="flex-1"></div>
-                <label className="text-sm text-gray-600">Score</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="0"
-                  className="w-16 border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-center appearance-none font-semibold text-lg"
-                  value={sa}
-                  onChange={(e) => {
-                    const onlyDigits = e.target.value.replace(/\D/g, "");
-                    setSa(onlyDigits);
-                  }}
-                  onKeyDown={(e) => {
-                    const allowed =
-                      [
-                        "Backspace",
-                        "Delete",
-                        "Tab",
-                        "ArrowLeft",
-                        "ArrowRight",
-                      ].includes(e.key) || /^[0-9]$/.test(e.key);
-                    if (!allowed) {
-                      e.preventDefault();
-                    }
-                  }}
-                  onPaste={(e) => {
-                    const txt = e.clipboardData.getData("text");
-                    if (!/^[0-9]*$/.test(txt)) {
-                      e.preventDefault();
-                    }
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  className="w-full border border-gray-300 rounded-md pl-3 pr-12 py-2 text-gray-900 bg-white appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: "right 0.75rem center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "1.5em 1.5em",
-                  }}
-                  value={a1}
-                  onChange={(e) => setA1(Number(e.target.value))}
-                >
-                  <option value="">Player 1</option>
-                  {players.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="w-full border border-gray-300 rounded-md pl-3 pr-12 py-2 text-gray-900 bg-white appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: "right 0.75rem center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "1.5em 1.5em",
-                  }}
-                  value={a2}
-                  onChange={(e) => setA2(Number(e.target.value))}
-                >
-                  <option value="">Player 2</option>
-                  {players.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* VS Divider */}
-            <div className="flex items-center justify-center py-1">
-              <div className="h-px bg-gray-300 flex-1"></div>
-              <span className="px-4 text-lg font-bold text-gray-500">VS</span>
-              <div className="h-px bg-gray-300 flex-1"></div>
-            </div>
-
-            {/* Team B Section */}
-            <div className="bg-linear-to-br from-orange-50 to-red-50 rounded-lg p-4 border border-orange-100">
-              <div className="flex items-center gap-3 mb-3">
-                <h3 className="text-base font-semibold text-gray-900">
-                  Team B
-                </h3>
-                <div className="flex-1"></div>
-                <label className="text-sm text-gray-600">Score</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="0"
-                  className="w-16 border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-center appearance-none font-semibold text-lg"
-                  value={sb}
-                  onChange={(e) => {
-                    const onlyDigits = e.target.value.replace(/\D/g, "");
-                    setSb(onlyDigits);
-                  }}
-                  onKeyDown={(e) => {
-                    const allowed =
-                      [
-                        "Backspace",
-                        "Delete",
-                        "Tab",
-                        "ArrowLeft",
-                        "ArrowRight",
-                      ].includes(e.key) || /^[0-9]$/.test(e.key);
-                    if (!allowed) {
-                      e.preventDefault();
-                    }
-                  }}
-                  onPaste={(e) => {
-                    const txt = e.clipboardData.getData("text");
-                    if (!/^[0-9]*$/.test(txt)) {
-                      e.preventDefault();
-                    }
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  className="w-full border border-gray-300 rounded-md pl-3 pr-12 py-2 text-gray-900 bg-white appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: "right 0.75rem center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "1.5em 1.5em",
-                  }}
-                  value={b1}
-                  onChange={(e) => setB1(Number(e.target.value))}
-                >
-                  <option value="">Player 1</option>
-                  {players.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="w-full border border-gray-300 rounded-md pl-3 pr-12 py-2 text-gray-900 bg-white appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: "right 0.75rem center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "1.5em 1.5em",
-                  }}
-                  value={b2}
-                  onChange={(e) => setB2(Number(e.target.value))}
-                >
-                  <option value="">Player 2</option>
-                  {players.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Error and Submit */}
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-red-600">{matchError}</p>
-              <Button type="submit" disabled={submittingMatch}>
-                {submittingMatch ? "Saving…" : "Save"}
-              </Button>
-            </div>
-          </form>
+          <MatchForm
+            key={formKey}
+            players={players}
+            onSubmit={addMatch}
+            onChange={setMatchFormData}
+            submitButtonText="Save"
+            isSubmitting={submittingMatch}
+            error={matchError}
+          />
         </div>
 
         {/* Add Player - moved to bottom */}

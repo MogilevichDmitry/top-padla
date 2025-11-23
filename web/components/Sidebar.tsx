@@ -16,6 +16,7 @@ const menuItems = [
   { href: "/players", label: "👤 Players", icon: "👤" },
   { href: "/pairs", label: "👯‍♂️ Pairs", icon: "👯‍♂️" },
   { href: "/records", label: "📈 Records", icon: "📈" },
+  { href: "/simulator", label: "🎮 Simulator", icon: "🎮" },
   { href: "/help", label: "ℹ️ Help & Guide", icon: "ℹ️" },
 ];
 
