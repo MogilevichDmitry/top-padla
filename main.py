@@ -125,19 +125,19 @@ async def day_summary_cmd(m: Message):
                             f"({attendees_count} игроков)\n"
                         )
                     footer += (
-                        f"\n💡 <i>Присоединиться: "
+                        f"\n💡 <i>Присоединиться или предложить игру: "
                         f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                     )
                 else:
                     footer = (
-                        f"💡 <i>Предложить игру: "
+                        f"💡 <i>Присоединиться или предложить игру: "
                         f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                     )
             except Exception as e:
                 # If we can't get games, still show the basic link
                 print(f"Error getting upcoming games: {e}")
                 footer = (
-                    f"💡 <i>Предложить игру: "
+                    f"💡 <i>Присоединиться или предложить игру: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                 )
             
@@ -224,19 +224,19 @@ async def day_summary_cmd(m: Message):
                         f"({attendees_count} игроков)\n"
                     )
                 message += (
-                    f"\n💡 <i>Присоединиться: "
+                    f"\n💡 <i>Присоединиться или предложить игру: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                 )
             else:
                 message += (
-                    f"\n\n💡 <i>Предложить игру: "
+                    f"\n\n💡 <i>Присоединиться или предложить игру: "
                     f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
                 )
         except Exception as e:
             # If we can't get games, still show the basic link
             print(f"Error getting upcoming games: {e}")
             message += (
-                f"\n\n💡 <i>Предложить игру: "
+                f"\n\n💡 <i>Присоединиться или предложить игру: "
                 f"<a href=\"https://www.qwerty123.eu/schedule\">qwerty123.eu/schedule</a></i>"
             )
         
