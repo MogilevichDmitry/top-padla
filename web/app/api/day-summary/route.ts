@@ -45,7 +45,7 @@ export async function GET() {
       return NextResponse.json({
         today: todayStr,
         players: [],
-        message: "Сегодня еще не было матчей.",
+        message: "Сегодня не было матчей.",
       });
     }
 
