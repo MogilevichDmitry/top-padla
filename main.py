@@ -217,59 +217,25 @@ async def format_day_summary_message() -> str:
         return f"❌ Ошибка при получении данных: {str(e)}"
 
 
-# Global variable to track last sent summary date (prevents duplicates)
-_last_summary_date = None
-
 async def send_daily_summary():
     """Send daily summary to Telegram group."""
-    global _last_summary_date
-    
     if not TELEGRAM_CHAT_ID:
         print("TELEGRAM_CHAT_ID not set, skipping daily summary")
         return
     
-    # Get current date in Warsaw timezone
     try:
-        import zoneinfo
-        warsaw_tz = zoneinfo.ZoneInfo("Europe/Warsaw")
-    except ImportError:
-        from zoneinfo import ZoneInfo
-        warsaw_tz = ZoneInfo("Europe/Warsaw")
-    
-    now_warsaw = datetime.now(warsaw_tz)
-    today_date = now_warsaw.date()
-    
-    # Get deployment/replica ID for logging (helps identify duplicate instances)
-    deployment_id = os.getenv("RAILWAY_DEPLOYMENT_ID", 
-                               os.getenv("RAILWAY_REPLICA_ID", 
-                                        os.getenv("HOSTNAME", 
-                                                 os.getenv("RAILWAY_ENVIRONMENT", "local"))))
-    
-    # Check if summary was already sent today (in-memory check per instance)
-    # This only prevents duplicates within the same process, not across multiple Railway services
-    if _last_summary_date == today_date:
-        print(f"⚠️  [Instance: {deployment_id}] Daily summary already sent today ({today_date}), skipping")
-        return
-    
-    try:
-        print(f"📊 [Instance: {deployment_id}] Preparing daily summary...")
+        print("📊 Sending daily summary...")
         message = await format_day_summary_message()
-        
-        # Add small instance identifier at the bottom for debugging duplicates
-        # If you see 2 messages with different instance IDs, you have 2 services running!
-        instance_tag = f"\n\n<small><i>Instance: {deployment_id[:12]}</i></small>" if deployment_id != "local" else ""
-        
-        sent_message = await bot.send_message(
+        await bot.send_message(
             chat_id=TELEGRAM_CHAT_ID,
-            text=message + instance_tag,
+            text=message,
             parse_mode="HTML",
             disable_web_page_preview=True
         )
-        _last_summary_date = today_date
-        print(f"✅ [Instance: {deployment_id}] Daily summary sent (msg_id: {sent_message.message_id})")
+        print("✅ Daily summary sent successfully")
     except Exception as e:
         import traceback
-        print(f"❌ [Instance: {deployment_id}] Error sending daily summary: {e}")
+        print(f"❌ Error sending daily summary: {e}")
         print(traceback.format_exc())
 
 
