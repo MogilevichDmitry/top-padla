@@ -78,8 +78,9 @@ export async function POST(request: NextRequest) {
       score_b: number;
     };
 
-    const maxByType: Record<string, number> = { to6: 6, to4: 4, to3: 3 };
-    const maxScore = maxByType[type] ?? 6;
+    // Max score includes tiebreak wins (7-5, 7-6 for to6, etc.)
+    const maxByType: Record<string, number> = { to6: 7, to4: 5, to3: 4 };
+    const maxScore = maxByType[type] ?? 7;
 
     if (
       !Array.isArray(team_a) ||

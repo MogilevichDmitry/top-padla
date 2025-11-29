@@ -81,7 +81,7 @@ export default function HelpPage() {
                   <h3 className="font-semibold text-gray-900">To 6 Points</h3>
                   <p className="text-sm">
                     Full rating effect (100%). Valid scores: 6-0, 6-1, 6-2, 6-3,
-                    6-4, 7-6 (tiebreak)
+                    6-4, 7-5, 7-6
                   </p>
                 </div>
               </div>
