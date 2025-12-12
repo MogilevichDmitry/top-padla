@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPlayers, createPlayer, deletePlayersByNames } from "@/lib/db";
+import { getPlayers, createPlayer, deletePlayersByNames, updatePlayer } from "@/lib/db";
 import { isAdminRequest } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { sql } from "@vercel/postgres";
@@ -64,6 +64,60 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Unknown error creating player";
     console.error("Error creating player:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    if (!isAdminRequest(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const body = await request.json();
+    const id = body?.id;
+    const nameRaw = (body?.name || "").trim();
+    const tgId =
+      body?.tg_id === null || body?.tg_id === undefined || body?.tg_id === ""
+        ? null
+        : Number(body.tg_id);
+
+    if (!id || typeof id !== "number") {
+      return NextResponse.json({ error: "Player ID is required" }, { status: 400 });
+    }
+    if (!nameRaw) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+    if (nameRaw.length > 64) {
+      return NextResponse.json({ error: "Name is too long" }, { status: 400 });
+    }
+
+    const player = await updatePlayer(
+      id,
+      nameRaw,
+      Number.isNaN(tgId) ? null : tgId
+    );
+
+    if (!player) {
+      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+    }
+
+    // Revalidate relevant caches
+    revalidatePath("/api/ratings");
+    revalidatePath("/api/players/stats");
+    revalidatePath("/api/records");
+    revalidatePath("/api/players");
+
+    return NextResponse.json(player, { status: 200 });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown error updating player";
+    console.error("Error updating player:", message);
+    
+    // Return 409 for duplicate name conflicts
+    if (message === "Player with this name already exists") {
+      return NextResponse.json({ error: message }, { status: 409 });
+    }
+    
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

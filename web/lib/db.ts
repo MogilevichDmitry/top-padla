@@ -118,6 +118,36 @@ export async function createPlayer(
   return rows[0];
 }
 
+export async function updatePlayer(
+  id: number,
+  name: string,
+  tgId: number | null = null
+): Promise<Player | null> {
+  // Check if player exists
+  const existing = await sql<Player>`
+    SELECT * FROM players WHERE id = ${id} LIMIT 1
+  `;
+  if (existing.rows.length === 0) {
+    return null;
+  }
+
+  // Check for name conflicts (case-insensitive) with other players
+  const conflict = await sql<Player>`
+    SELECT * FROM players WHERE LOWER(name) = LOWER(${name}) AND id != ${id} LIMIT 1
+  `;
+  if (conflict.rows.length > 0) {
+    throw new Error("Player with this name already exists");
+  }
+
+  const { rows } = await sql<Player>`
+    UPDATE players
+    SET name = ${name}, tg_id = ${tgId}
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return rows[0] || null;
+}
+
 export async function createMatch(match: Omit<Match, "id">): Promise<Match> {
   // Convert arrays to PostgreSQL array format
   const teamAStr = `{${match.team_a.join(",")}}`;

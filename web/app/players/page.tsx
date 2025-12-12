@@ -1,19 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { nameToSlug, getWinRateBadgeClasses } from "@/lib/utils";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
+import { usePlayers } from "@/hooks/usePlayers";
 import Loading from "@/components/Loading";
+import EditPlayerModal from "@/components/EditPlayerModal";
+
+interface PlayerBasic {
+  id: number;
+  name: string;
+  tg_id: number | null;
+}
 
 export default function PlayersPage() {
   const router = useRouter();
   const { data: players = [], isLoading, error } = usePlayerStats();
+  const { data: playersWithTgId = [] } = usePlayers();
   const [sortBy, setSortBy] = useState<"rating" | "matches" | "winRate">(
     "rating"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerBasic | null>(null);
+  const [notify, setNotify] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  // Check admin status
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        setIsAdmin(Boolean(data?.admin));
+      } catch {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, []);
+
+  const handleEdit = (playerId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const playerData = playersWithTgId.find((p) => p.id === playerId);
+    if (playerData) {
+      setSelectedPlayer(playerData);
+      setEditModalOpen(true);
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setNotify({ text: "Player updated", type: "success" });
+    setTimeout(() => setNotify(null), 3000);
+  };
 
   const handleSort = (field: "rating" | "matches" | "winRate") => {
     if (sortBy === field) {
@@ -92,7 +134,7 @@ export default function PlayersPage() {
                 className="bg-white p-4 border-b border-b-gray-200"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="inline-flex items-center">
+                  <div className="inline-flex items-center gap-2">
                     <Link
                       href={`/players/${nameToSlug(player.name)}`}
                       className="font-semibold text-gray-900 text-lg hover:text-blue-600"
@@ -100,9 +142,20 @@ export default function PlayersPage() {
                       {player.name}
                     </Link>
                     {rankMap.get(player.id) && (
-                      <span className="text-xs text-gray-500 font-normal ml-0.5">
+                      <span className="text-xs text-gray-500 font-normal">
                         #{rankMap.get(player.id)}
                       </span>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => handleEdit(player.id, e)}
+                        className="text-gray-400 hover:text-blue-600 p-1"
+                        title="Edit player"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
                     )}
                   </div>
                   <span className="text-xl font-bold text-gray-900">
@@ -245,6 +298,11 @@ export default function PlayersPage() {
                   <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Match Types
                   </th>
+                  {isAdmin && (
+                    <th className="px-4 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -311,6 +369,19 @@ export default function PlayersPage() {
                         )}
                       </div>
                     </td>
+                    {isAdmin && (
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={(e) => handleEdit(player.id, e)}
+                          className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                          title="Edit player"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -340,15 +411,28 @@ export default function PlayersPage() {
                   className="bg-white p-4 border-b border-b-gray-200"
                 >
                   <div className="flex items-center justify-between">
-                    <Link
-                      href={`/players/${nameToSlug(player.name)}`}
-                      className="font-semibold text-gray-500 text-lg hover:text-blue-600"
-                    >
-                      {player.name}{" "}
-                      <span className="text-xs text-gray-400 font-normal">
-                        (inactive)
-                      </span>
-                    </Link>
+                    <div className="inline-flex items-center gap-2">
+                      <Link
+                        href={`/players/${nameToSlug(player.name)}`}
+                        className="font-semibold text-gray-500 text-lg hover:text-blue-600"
+                      >
+                        {player.name}{" "}
+                        <span className="text-xs text-gray-400 font-normal">
+                          (inactive)
+                        </span>
+                      </Link>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => handleEdit(player.id, e)}
+                          className="text-gray-400 hover:text-blue-600 p-1"
+                          title="Edit player"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                     <span className="text-xl font-bold text-gray-400">
                       {Math.floor(player.rating)}
                     </span>
@@ -380,6 +464,11 @@ export default function PlayersPage() {
                     <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Match Types
                     </th>
+                    {isAdmin && (
+                      <th className="px-4 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
@@ -416,6 +505,19 @@ export default function PlayersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className="text-xs text-gray-400">—</span>
                       </td>
+                      {isAdmin && (
+                        <td className="px-4 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={(e) => handleEdit(player.id, e)}
+                            className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                            title="Edit player"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -433,6 +535,28 @@ export default function PlayersPage() {
           </p>
         </div>
       </div>
+
+      {/* Edit Player Modal */}
+      <EditPlayerModal
+        isOpen={editModalOpen}
+        player={selectedPlayer}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedPlayer(null);
+        }}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Notification */}
+      {notify && (
+        <div
+          className={`fixed top-4 right-4 z-50 ${
+            notify.type === "success" ? "bg-green-600" : "bg-red-600"
+          } text-white text-base px-5 py-3 rounded-lg shadow-lg`}
+        >
+          {notify.text}
+        </div>
+      )}
     </div>
   );
 }
