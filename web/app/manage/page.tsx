@@ -25,6 +25,9 @@ export default function ManagePage() {
   const [playerError, setPlayerError] = useState<string | null>(null);
   const [recomputingPairs, setRecomputingPairs] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  const [persistedMatchType, setPersistedMatchType] = useState<
+    "to6" | "to4" | "to3"
+  >("to6");
 
   // Add Player form
   const [playerName, setPlayerName] = useState("");
@@ -40,6 +43,12 @@ export default function ManagePage() {
     scoreA: "",
     scoreB: "",
   });
+
+  // Memoize initialData to prevent unnecessary re-renders
+  const matchFormInitialData = useMemo(
+    () => ({ type: persistedMatchType }),
+    [persistedMatchType]
+  );
 
   useEffect(() => {
     async function init() {
@@ -133,10 +142,10 @@ export default function ManagePage() {
       setNotify({ text: "Match created", type: "success" });
       setMatchError(null);
       // Reset form but keep the match type
-      const currentType = data.type;
+      setPersistedMatchType(data.type);
       setFormKey((prev) => prev + 1);
       setMatchFormData({
-        type: currentType,
+        type: data.type,
         teamA1: "",
         teamA2: "",
         teamB1: "",
@@ -194,7 +203,7 @@ export default function ManagePage() {
             players={players}
             onSubmit={addMatch}
             onChange={setMatchFormData}
-            initialData={{ type: matchFormData.type }}
+            initialData={matchFormInitialData}
             submitButtonText="Save"
             isSubmitting={submittingMatch}
             error={matchError}
@@ -241,11 +250,14 @@ export default function ManagePage() {
 
         {/* Admin Actions */}
         <div className="bg-white border border-gray-200 rounded-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Actions</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Admin Actions
+          </h2>
           <div className="space-y-3">
             <div>
               <p className="text-sm text-gray-600 mb-2">
-                Recompute all pair ratings from match history. Use this if pairs are not updating correctly after adding matches.
+                Recompute all pair ratings from match history. Use this if pairs
+                are not updating correctly after adding matches.
               </p>
               <button
                 type="button"
@@ -258,13 +270,20 @@ export default function ManagePage() {
                     });
                     if (!res.ok) {
                       const data = await res.json().catch(() => ({}));
-                      throw new Error(data?.error || "Failed to recompute pairs");
+                      throw new Error(
+                        data?.error || "Failed to recompute pairs"
+                      );
                     }
-                    setNotify({ text: "Pairs recomputed successfully", type: "success" });
+                    setNotify({
+                      text: "Pairs recomputed successfully",
+                      type: "success",
+                    });
                     // Invalidate caches
                     queryClient.invalidateQueries({ queryKey: ["pairs"] });
                     queryClient.invalidateQueries({ queryKey: ["ratings"] });
-                    queryClient.invalidateQueries({ queryKey: ["playerStats"] });
+                    queryClient.invalidateQueries({
+                      queryKey: ["playerStats"],
+                    });
                   } catch (e: unknown) {
                     const message = e instanceof Error ? e.message : "Error";
                     setNotify({ text: message, type: "error" });

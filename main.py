@@ -49,6 +49,31 @@ dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 
 
+def format_relative_date(game_date_str: str) -> str:
+    """Format date as relative (Today, Tomorrow, In X days) or as DD.MM"""
+    try:
+        game_date = datetime.strptime(game_date_str, "%Y-%m-%d").date()
+        today = datetime.now().date()
+        diff = (game_date - today).days
+        
+        if diff == 0:
+            return "Today"
+        elif diff == 1:
+            return "Tomorrow"
+        elif diff == 2:
+            return "In 2 days"
+        elif diff == 3:
+            return "In 3 days"
+        elif diff == 4:
+            return "In 4 days"
+        elif diff == 5:
+            return "In 5 days"
+        else:
+            return game_date.strftime("%d.%m")
+    except:
+        return game_date_str
+
+
 # ---------- API functions ----------
 async def get_day_summary() -> Dict:
     """Get today's summary from web API."""
@@ -98,13 +123,10 @@ async def format_day_summary_message() -> str:
                         start_time_raw = game.get('start_time', '')
                         location = game.get('location', '')
                         attendees = game.get('attendees', [])
-                        attendees_count = len(attendees)
+                        # Count only those who are attending (not declined)
+                        attendees_count = len([a for a in attendees if a.get('status') == 'attending'])
                         
-                        try:
-                            date_obj = datetime.strptime(game_date, "%Y-%m-%d")
-                            date_formatted = date_obj.strftime("%d.%m")
-                        except:
-                            date_formatted = game_date
+                        date_formatted = format_relative_date(game_date)
                         
                         start_time = start_time_raw
                         if ':' in start_time_raw and len(start_time_raw) > 5:
@@ -177,13 +199,10 @@ async def format_day_summary_message() -> str:
                     start_time_raw = game.get('start_time', '')
                     location = game.get('location', '')
                     attendees = game.get('attendees', [])
-                    attendees_count = len(attendees)
+                    # Count only those who are attending (not declined)
+                    attendees_count = len([a for a in attendees if a.get('status') == 'attending'])
                     
-                    try:
-                        date_obj = datetime.strptime(game_date, "%Y-%m-%d")
-                        date_formatted = date_obj.strftime("%d.%m")
-                    except:
-                        date_formatted = game_date
+                    date_formatted = format_relative_date(game_date)
                     
                     start_time = start_time_raw
                     if ':' in start_time_raw and len(start_time_raw) > 5:
