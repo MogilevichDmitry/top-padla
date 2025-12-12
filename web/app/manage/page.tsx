@@ -132,10 +132,11 @@ export default function ManagePage() {
       }
       setNotify({ text: "Match created", type: "success" });
       setMatchError(null);
-      // Reset form by changing key to force remount
+      // Reset form but keep the match type
+      const currentType = data.type;
       setFormKey((prev) => prev + 1);
       setMatchFormData({
-        type: "to6",
+        type: currentType,
         teamA1: "",
         teamA2: "",
         teamB1: "",
@@ -193,6 +194,7 @@ export default function ManagePage() {
             players={players}
             onSubmit={addMatch}
             onChange={setMatchFormData}
+            initialData={{ type: matchFormData.type }}
             submitButtonText="Save"
             isSubmitting={submittingMatch}
             error={matchError}
